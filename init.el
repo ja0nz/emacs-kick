@@ -465,7 +465,7 @@
   :config
   (setq eldoc-idle-delay 0)                  ;; Automatically fetch doc help
   (setq eldoc-echo-area-use-multiline-p nil) ;; We use the "K" floating help instead
-                                             ;; set to t if you want docs on the echo area
+  ;; set to t if you want docs on the echo area
   (setq eldoc-echo-area-display-truncation-message nil)
   :init
   (global-eldoc-mode))
@@ -672,7 +672,7 @@
   (corfu-popupinfo-delay 0.5)            ;; Delay before showing documentation popup
   :config
   (if ek-use-nerd-fonts
-    (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
+      (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
   :init
   (global-corfu-mode)
   (corfu-popupinfo-mode t))
@@ -718,6 +718,7 @@
            python-base-mode                             ;; Enable LSP for Python
            ruby-base-mode                               ;; Enable LSP for Ruby
            rust-ts-mode                                 ;; Enable LSP for Rust
+           nix-mode                                     ;; Enable LSP for Nix
            web-mode) . lsp-deferred))                   ;; Enable LSP for Web (HTML)
   :commands lsp
   :custom
@@ -778,6 +779,11 @@
   :init
   (setq lsp-tailwindcss-add-on-mode t))
 
+(use-package lsp-nix
+  :ensure lsp-mode
+  :after (lsp-mode)
+  :init
+  (setq lsp-nix-nil-formatter ["nixfmt"]))
 
 ;;; ELDOC-BOX
 ;; eldoc-box enhances the default Eldoc experience by displaying documentation in a popup box,
@@ -924,7 +930,7 @@
   (setq evil-want-C-u-scroll t)       ;; Makes C-u scroll
   (setq evil-want-C-u-delete t)       ;; Makes C-u delete on insert mode
   :config
-  (evil-set-undo-system 'undo-tree)   ;; Uses the undo-tree package as the default undo system
+  (evil-set-undo-system 'undo-redo)   ;; Uses the default undo system
 
   ;; Set the leader key to space for easier access to custom commands. (setq evil-want-leader t)
   (setq evil-leader/in-all-states t)  ;; Make the leader key available in all states.
@@ -995,7 +1001,7 @@
   (evil-define-key 'normal 'global (kbd "<leader> .") 'embark-act)
 
   ;; Undo tree visualization
-  (evil-define-key 'normal 'global (kbd "<leader> u") 'undo-tree-visualize)
+  (evil-define-key 'normal 'global (kbd "<leader> u") 'vundo)
 
   ;; Help keybindings
   (evil-define-key 'normal 'global (kbd "<leader> h m") 'describe-mode) ;; Describe current mode
@@ -1010,19 +1016,19 @@
 
   ;; Custom example. Formatting with prettier tool.
   (evil-define-key 'normal 'global (kbd "<leader> m p")
-                   (lambda ()
-                     (interactive)
-                     (shell-command (concat "prettier --write " (shell-quote-argument (buffer-file-name))))
-                     (revert-buffer t t t)))
+    (lambda ()
+      (interactive)
+      (shell-command (concat "prettier --write " (shell-quote-argument (buffer-file-name))))
+      (revert-buffer t t t)))
 
   ;; LSP commands keybindings
   (evil-define-key 'normal lsp-mode-map
-                   ;; (kbd "gd") 'lsp-find-definition                ;; evil-collection already provides gd
-                   (kbd "gr") 'lsp-find-references                   ;; Finds LSP references
-                   (kbd "<leader> c a") 'lsp-execute-code-action     ;; Execute code actions
-                   (kbd "<leader> r n") 'lsp-rename                  ;; Rename symbol
-                   (kbd "gI") 'lsp-find-implementation               ;; Find implementation
-                   (kbd "<leader> l f") 'lsp-format-buffer)          ;; Format buffer via lsp
+    ;; (kbd "gd") 'lsp-find-definition                ;; evil-collection already provides gd
+    (kbd "gr") 'lsp-find-references                   ;; Finds LSP references
+    (kbd "<leader> c a") 'lsp-execute-code-action     ;; Execute code actions
+    (kbd "<leader> r n") 'lsp-rename                  ;; Rename symbol
+    (kbd "gI") 'lsp-find-implementation               ;; Find implementation
+    (kbd "<leader> l f") 'lsp-format-buffer)          ;; Format buffer via lsp
 
 
   (defun ek/lsp-describe-and-jump ()
@@ -1039,20 +1045,20 @@
   (evil-define-key 'normal 'global (kbd "K")
     (if (>= emacs-major-version 31)
         #'eldoc-box-help-at-point
-        #'ek/lsp-describe-and-jump))
+      #'ek/lsp-describe-and-jump))
 
   ;; Commenting functionality for single and multiple lines
   (evil-define-key 'normal 'global (kbd "gcc")
-                   (lambda ()
-                     (interactive)
-                     (if (not (use-region-p))
-                         (comment-or-uncomment-region (line-beginning-position) (line-end-position)))))
+    (lambda ()
+      (interactive)
+      (if (not (use-region-p))
+          (comment-or-uncomment-region (line-beginning-position) (line-end-position)))))
 
   (evil-define-key 'visual 'global (kbd "gc")
-                   (lambda ()
-                     (interactive)
-                     (if (use-region-p)
-                         (comment-or-uncomment-region (region-beginning) (region-end)))))
+    (lambda ()
+      (interactive)
+      (if (use-region-p)
+          (comment-or-uncomment-region (region-beginning) (region-end)))))
 
   ;; Enable evil mode
   (evil-mode 1))
@@ -1111,27 +1117,26 @@
 ;; manage undo history. It allows you to navigate and visualize your
 ;; undo history as a tree structure, making it easier to manage
 ;; changes in your buffers.
-(use-package undo-tree
-  :defer t
-  :ensure t
-  :straight t
-  :hook
-  (after-init . global-undo-tree-mode)
-  :init
-  (setq undo-tree-visualizer-timestamps t
-        undo-tree-visualizer-diff t
-        ;; Increase undo limits to avoid losing history due to Emacs' garbage collection.
-        ;; These values can be adjusted based on your needs.
-        ;; 10X bump of the undo limits to avoid issues with premature
-        ;; Emacs GC which truncates the undo history very aggressively.
-        undo-limit 800000                     ;; Limit for undo entries.
-        undo-strong-limit 12000000            ;; Strong limit for undo entries.
-        undo-outer-limit 120000000)           ;; Outer limit for undo entries.
-  :config
-  ;; Set the directory where `undo-tree' will save its history files.
-  ;; This keeps undo history across sessions, stored in a cache directory.
-  (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/.cache/undo"))))
-
+;; (use-package undo-tree
+;;   :defer t
+;;   :ensure t
+;;   :straight t
+;;   :hook
+;;   (after-init . global-undo-tree-mode)
+;;   :init
+;;   (setq undo-tree-visualizer-timestamps t
+;;         undo-tree-visualizer-diff t
+;;         ;; Increase undo limits to avoid losing history due to Emacs' garbage collection.
+;;         ;; These values can be adjusted based on your needs.
+;;         ;; 10X bump of the undo limits to avoid issues with premature
+;;         ;; Emacs GC which truncates the undo history very aggressively.
+;;         undo-limit 800000                     ;; Limit for undo entries.
+;;         undo-strong-limit 12000000            ;; Strong limit for undo entries.
+;;         undo-outer-limit 120000000)           ;; Outer limit for undo entries.
+;;   :config
+;;   ;; Set the directory where `undo-tree' will save its history files.
+;;   ;; This keeps undo history across sessions, stored in a cache directory.
+;;   (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d/.cache/undo"))))
 
 ;;; RAINBOW DELIMITERS
 ;; The `rainbow-delimiters' package provides colorful parentheses, brackets, and braces
@@ -1303,6 +1308,57 @@
   (message ">>> Emacs-Kick installed! Press any key to close the installer and open Emacs normally. First boot will compile some extra stuff :)")
   (read-key)                                         ;; Wait for the user to press any key.
   (kill-emacs))                                      ;; Close Emacs after installation is complete.
+
+;;; Enhancing emacs.kick for my need
+;;; NIX MODE
+(use-package nix-mode
+  :ensure t
+  :straight t
+  :defer t
+  :mode "\\.nix\\'")
+
+;;; ENVRC
+;; Integrates direnv with Emacs, automatically loading project-specific environment variables from `.envrc`.
+;; Keeps Emacs' environment in sync with the shell and allows approving `.envrc` files from within Emacs.
+(use-package envrc
+  :ensure t
+  :straight t
+  :defer t
+  :hook (after-init . envrc-global-mode))
+
+;;; VUNDO
+;; Provides a visual, interactive undo tree in Emacs, letting you browse and selectively undo or redo changes
+(use-package vundo
+  :commands (vundo)
+  :straight (vundo :type git :host github :repo "casouri/vundo")
+  :init
+  (setq undo-limit 800000)                     ;; Limit for undo entries.
+  :config
+  (setq vundo-popup-mode t)
+  (setq vundo-glyph-alist vundo-unicode-symbols)
+
+  ;; VIM-like motion navigation
+  (dolist (binding '(("l" . vundo-forward)
+                     ("L" . vundo-stem-end)
+                     ("M-l" . vundo-goto-next-saved)
+					 
+                     ("h" . vundo-backward)
+                     ("H" . vundo-stem-root)
+                     ("M-h" . vundo-goto-last-saved)
+					 
+                     ("j" . vundo-next)
+                     ("k" . vundo-previous)
+                     ("q" . vundo-quit)
+                     ("C-g" . vundo-quit)
+                     ("RET" . vundo-confirm)
+
+                     ("m" . vundo-diff-mark)
+                     ("u" . vundo-diff-unmark)
+                     ("d" . vundo-diff)
+                     ("i" . vundo--inspect)
+                     ("D" . vundo--debug)))
+	
+    (define-key vundo-mode-map (kbd (car binding)) (cdr binding))))
 
 (provide 'init)
 ;;; init.el ends here
