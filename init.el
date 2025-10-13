@@ -930,7 +930,7 @@
   (setq evil-want-C-u-scroll t)       ;; Makes C-u scroll
   (setq evil-want-C-u-delete t)       ;; Makes C-u delete on insert mode
   :config
-  (evil-set-undo-system 'undo-redo)   ;; Uses the default undo system
+  (evil-set-undo-system 'undo-fu)   ;; Uses the default undo system
 
   ;; Set the leader key to space for easier access to custom commands. (setq evil-want-leader t)
   (setq evil-leader/in-all-states t)  ;; Make the leader key available in all states.
@@ -1331,34 +1331,46 @@
 (use-package vundo
   :commands (vundo)
   :straight (vundo :type git :host github :repo "casouri/vundo")
-  :init
-  (setq undo-limit 800000)                     ;; Limit for undo entries.
   :config
   (setq vundo-popup-mode t)
   (setq vundo-glyph-alist vundo-unicode-symbols)
+  :bind
+  (:map vundo-mode-map
+        ;; VIM-like motion navigation
+        ("l" . vundo-forward)
+        ("L" . vundo-stem-end)
+        ("M-l" . vundo-goto-next-saved)
+        ("h" . vundo-backward)
+        ("H" . vundo-stem-root)
+        ("M-h" . vundo-goto-last-saved)
+        ("j" . vundo-next)
+        ("k" . vundo-previous)
+        ("q" . vundo-quit)
+        ("C-g" . vundo-quit)
+        ("RET" . vundo-confirm)
+        ("m" . vundo-diff-mark)
+        ("u" . vundo-diff-unmark)
+        ("d" . vundo-diff)
+        ("i" . vundo--inspect)
+        ("D" . vundo--debug)))
 
-  ;; VIM-like motion navigation
-  (dolist (binding '(("l" . vundo-forward)
-                     ("L" . vundo-stem-end)
-                     ("M-l" . vundo-goto-next-saved)
-					 
-                     ("h" . vundo-backward)
-                     ("H" . vundo-stem-root)
-                     ("M-h" . vundo-goto-last-saved)
-					 
-                     ("j" . vundo-next)
-                     ("k" . vundo-previous)
-                     ("q" . vundo-quit)
-                     ("C-g" . vundo-quit)
-                     ("RET" . vundo-confirm)
+(use-package undo-fu
+  :ensure t
+  :straight t)
 
-                     ("m" . vundo-diff-mark)
-                     ("u" . vundo-diff-unmark)
-                     ("d" . vundo-diff)
-                     ("i" . vundo--inspect)
-                     ("D" . vundo--debug)))
-	
-    (define-key vundo-mode-map (kbd (car binding)) (cdr binding))))
+(use-package undo-fu-session
+  :ensure t
+  :straight t
+  :after undo-fu
+  :custom
+  ;; Set the undo session directory relative to the current init directory
+  (undo-fu-session-directory (expand-file-name "undo-fu-session/" user-emacs-directory))
+  :config
+  (setq undo-limit 67108864) ; 64mb.
+  (setq undo-strong-limit 100663296) ; 96mb.
+  (setq undo-outer-limit 1006632960) ; 960mb.
+  (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+  (global-undo-fu-session-mode))
 
 (provide 'init)
 ;;; init.el ends here
