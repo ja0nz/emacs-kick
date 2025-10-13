@@ -496,6 +496,48 @@
   :ensure nil     ;; This is built-in, no need to fetch it.
   :defer t)       ;; Defer loading Org-mode until it's needed.
 
+;;; DENOTE
+(use-package denote
+  :straight t
+  :defer t
+  :ensure t
+  :hook
+  ( ;; Apply colours to Denote names in Dired.  This applies to all
+   ;; directories.  Check `denote-dired-directories' for the specific
+   ;; directories you may prefer instead.  Then, instead of
+   ;; `denote-dired-mode', use `denote-dired-mode-in-directories'.
+   (dired-mode . denote-dired-mode))
+  :config
+  (setq denote-directory (expand-file-name "~/Syncthing/jan/org/"))
+  (setq denote-save-buffers nil) ;; Control whether to save buffers automatically
+  (setq denote-infer-keywords t) ;; Whether to infer keywords form existing note files
+  (setq denote-sort-keywords t)  ;; Whether to sort keywords in new files
+  (setq denote-prompts '(title keywords))
+  (setq denote-excluded-directories-regexp nil)
+  (setq denote-excluded-keywords-regexp nil)
+  (setq denote-rename-confirmations '(rewrite-front-matter modify-file-name))
+
+  ;; Pick dates, where relevant, with Org's advanced interface:
+  (setq denote-date-prompt-use-org-read-date t)
+
+  ;; Automatically rename Denote buffers using the `denote-rename-buffer-format'.
+  (denote-rename-buffer-mode 1))
+
+(use-package denote-journal
+  :straight t
+  :defer t
+  :ensure t
+  :hook (calendar-mode . denote-journal-calendar-mode)
+  :config
+  ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
+  ;; to nil to use the `denote-directory' instead.
+  (setq denote-journal-directory
+        (expand-file-name "journal" denote-directory))
+  ;; Default keyword for new journal entries. It can also be a list of
+  ;; strings.
+  (setq denote-journal-keyword "journal")
+  ;; Read the doc string of `denote-journal-title-format'.
+  (setq denote-journal-title-format 'day-date-month-year))
 
 ;;; WHICH-KEY
 ;; `which-key' is an Emacs package that displays available keybindings in a
@@ -845,6 +887,9 @@
   :ensure t
   :straight t
   :config
+  ;; Magit in full screen
+  (setq magit-display-buffer-function
+        #'magit-display-buffer-fullframe-status-v1)
   (if ek-use-nerd-fonts   ;; Check if nerd fonts are being used
 	  (setopt magit-format-file-function #'magit-format-file-nerd-icons)) ;; Turns on magit nerd-icons
   :defer t)
@@ -992,6 +1037,30 @@
   (evil-define-key 'normal 'global (kbd "<leader> p g") 'project-find-regexp) ;; Find regexp in project
   (evil-define-key 'normal 'global (kbd "<leader> p k") 'project-kill-buffers) ;; Kill project buffers
   (evil-define-key 'normal 'global (kbd "<leader> p D") 'project-dired) ;; Dired for project
+
+  ;; Notes by Denote
+  (evil-define-key 'normal 'global (kbd "<leader> n n") 'denote) ;; New note
+  (evil-define-key 'normal 'global (kbd "<leader> n d") 'denote-dired) ;; Open dired
+  (evil-define-key 'normal 'global (kbd "<leader> n g") 'denote-grep) ;; Search in note
+  (evil-define-key 'normal 'global (kbd "<leader> n l") 'denote-link) ;; Create link to FILE note in variable ‘denote-directory’ with DESCRIPTION
+  (evil-define-key 'normal 'global (kbd "<leader> n L") 'denote-add-links) ;; Insert links to all files whose file names match REGEXP.
+  (evil-define-key 'normal 'global (kbd "<leader> n b") 'denote-backlinks) ;;Produce a buffer with backlinks to the current note.
+  (evil-define-key 'normal 'global (kbd "<leader> n q c") 'denote-query-contents-link) ;; Insert query link for file contents.
+  (evil-define-key 'normal 'global (kbd "<leader> n q f") 'denote-query-filenames-link) ;; Insert query link for file names.
+  (evil-define-key 'normal 'global (kbd "<leader> n r") 'denote-rename-file) ;; Rename file and update existing front matter if appropriate.
+  (evil-define-key 'normal 'global (kbd "<leader> n R") 'denote-rename-file-using-front-matter) ;; Rename FILE using its front matter as input.
+
+  ;; Denote dired
+  (with-eval-after-load 'dired
+    (evil-define-key 'normal dired-mode-map
+      (kbd "<leader> n i") 'denote-dired-link-marked-notes ;; Insert Dired marked FILES as links in BUFFER
+      (kbd "<leader> n k") 'denote-dired-rename-files ;; Rename Dired marked files like denote-rename-file
+      (kbd "<leader> n r") 'denote-dired-rename-marked-files-with-keywords ;; Rename a Dired marked file to a Denote file
+      (kbd "<leader> n R") 'denote-dired-rename-marked-files-using-front-matter)) ;; Rename FILE using its front matter as input.
+
+  ;; Denote Journal
+  (evil-define-key 'normal 'global (kbd "<leader> j j") 'denote-journal-new-or-existing-entry) ;; New journal entry
+  (evil-define-key 'normal 'global (kbd "<leader> j l") 'denote-journal-link-or-create-entry) ;; Link to journal entry
 
   ;; Yank from kill ring
   (evil-define-key 'normal 'global (kbd "P") 'consult-yank-from-kill-ring)
