@@ -859,6 +859,10 @@
                  (global-diff-hl-mode)           ;; Enable Diff-HL mode for all files.
                  (diff-hl-flydiff-mode)          ;; Automatically refresh diffs.
                  (diff-hl-margin-mode)))         ;; Show diff indicators in the margin.
+  :config
+  ;; Update diff-hl after committing in Magit
+  (with-eval-after-load 'magit
+    (add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh))
   :custom
   (diff-hl-side 'left)                           ;; Set the side for diff indicators.
   (diff-hl-margin-symbols-alist '((insert . "┃") ;; Customize symbols for each change type.
