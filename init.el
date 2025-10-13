@@ -1077,8 +1077,10 @@
   (evil-collection-want-find-usages-bindings t)
   ;; Hook to initialize `evil-collection' when `evil-mode' is activated.
   :hook
-  (evil-mode . evil-collection-init))
-
+  (evil-mode . (lambda ()
+                 (evil-collection-init)
+                 ;; unbind SPC after init
+                 (evil-collection-define-key 'normal 'dired-mode-map (kbd "SPC") nil))))
 
 ;; EVIL SURROUND
 ;; The `evil-surround' package provides text object surround
