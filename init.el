@@ -1332,7 +1332,7 @@
 ;; Provides a visual, interactive undo tree in Emacs, letting you browse and selectively undo or redo changes
 (use-package vundo
   :commands (vundo)
-  :straight (vundo :type git :host github :repo "casouri/vundo")
+  :straight t
   :config
   (setq vundo-popup-mode t)
   (setq vundo-glyph-alist vundo-unicode-symbols)
