@@ -494,11 +494,19 @@
 ;; it's explicitly needed, which can help speed up Emacs startup time.
 (use-package org
   :ensure nil     ;; This is built-in, no need to fetch it.
-  :defer t)       ;; Defer loading Org-mode until it's needed.
+  :defer t        ;; Defer loading Org-mode until it's needed.
+  :hook
+  (org-mode . visual-line-mode))     ;; Line wrapping for org.
+
+(use-package org-superstar
+  :straight t
+  :after org
+  :hook (org-mode . org-superstar-mode))
 
 ;;; DENOTE
 (use-package denote
   :straight t
+  :commands (denote denote-dired)
   :defer t
   :ensure t
   :hook
@@ -508,7 +516,7 @@
    ;; `denote-dired-mode', use `denote-dired-mode-in-directories'.
    (dired-mode . denote-dired-mode))
   :config
-  (setq denote-directory (expand-file-name "~/Syncthing/jan/org/"))
+  (setq denote-directory (expand-file-name "~/Documents/denote/"))
   (setq denote-save-buffers nil) ;; Control whether to save buffers automatically
   (setq denote-infer-keywords t) ;; Whether to infer keywords form existing note files
   (setq denote-sort-keywords t)  ;; Whether to sort keywords in new files
