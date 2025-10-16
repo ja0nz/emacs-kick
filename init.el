@@ -221,6 +221,7 @@
   (use-dialog-box nil)                            ;; Disable dialog boxes in favor of minibuffer prompts.
   (use-short-answers t)                           ;; Use short answers in prompts for quicker responses (y instead of yes)
   (warning-minimum-level :emergency)              ;; Set the minimum level of warnings to display.
+  (help-window-select t)                          ;; Non-nil means select help window for viewing.
 
   :hook                                           ;; Add hooks to enable specific features in certain modes.
   (prog-mode . display-line-numbers-mode)         ;; Enable line numbers in programming modes.
@@ -998,22 +999,19 @@
   (evil-set-leader 'visual (kbd "SPC"))
 
   ;; Keybindings for searching and finding files.
-  (evil-define-key 'normal 'global (kbd "<leader> s f") 'consult-find)
+  (evil-define-key 'normal 'global (kbd "<leader> s f") 'consult-fd)
   (evil-define-key 'normal 'global (kbd "<leader> s g") 'consult-grep)
   (evil-define-key 'normal 'global (kbd "<leader> s G") 'consult-git-grep)
   (evil-define-key 'normal 'global (kbd "<leader> s r") 'consult-ripgrep)
   (evil-define-key 'normal 'global (kbd "<leader> s h") 'consult-info)
   (evil-define-key 'normal 'global (kbd "<leader> /") 'consult-line)
+  (evil-define-key 'normal 'global (kbd "<leader> s i") 'consult-imenu)
+  (evil-define-key 'normal 'global (kbd "<leader> s I") 'consult-imenu-multi)
 
   ;; Flymake navigation
   (evil-define-key 'normal 'global (kbd "<leader> x x") 'consult-flymake);; Gives you something like `trouble.nvim'
   (evil-define-key 'normal 'global (kbd "] d") 'flymake-goto-next-error) ;; Go to next Flymake error
   (evil-define-key 'normal 'global (kbd "[ d") 'flymake-goto-prev-error) ;; Go to previous Flymake error
-
-  ;; Dired commands for file management
-  (evil-define-key 'normal 'global (kbd "<leader> x d") 'dired)
-  (evil-define-key 'normal 'global (kbd "<leader> x j") 'dired-jump)
-  (evil-define-key 'normal 'global (kbd "<leader> x f") 'find-file)
 
   ;; Diff-HL navigation for version control
   (evil-define-key 'normal 'global (kbd "] c") 'diff-hl-next-hunk) ;; Next diff hunk
@@ -1029,7 +1027,27 @@
   (evil-define-key 'normal 'global (kbd "<leader> g d") 'magit-diff-buffer-file) ;; Show diff for the current file
   (evil-define-key 'normal 'global (kbd "<leader> g D") 'diff-hl-show-hunk) ;; Show diff for a hunk
   (evil-define-key 'normal 'global (kbd "<leader> g b") 'vc-annotate)       ;; Annotate buffer with version control info
+  
+  ;; [R] Registers / Marks / Bookmark keybindings
+  ;; Simplest form of jump back points
+  (evil-define-key 'normal 'global (kbd "<leader> r m") 'consult-mark) ;; Jump to a marker in markers list set by C-SPC  
+  (evil-define-key 'normal 'global (kbd "<leader> r M") 'consult-global-mark) ;; Global jump to a marker in markers list
+ 
+  ;; A little more than marks, more versatile
+  (evil-define-key 'normal 'global (kbd "<leader> r r") 'consult-register) ;; List, preview and jump/insert all registers
+  (evil-define-key 'normal 'global (kbd "<leader> r l") 'consult-register-load) ;; Insert tet or jump to a register 
+  (evil-define-key 'normal 'global (kbd "<leader> r s") 'consult-register-store) ;; Store text or region into a register
+  
+  ;; Think of persistent named marks
+  (evil-define-key 'normal 'global (kbd "<leader> r b") 'consult-bookmark) ;; Bookmark or jump to 
+  (evil-define-key 'normal 'global (kbd "<leader> r B") 'bookmark-delete) ;; Delete Bookmark 
 
+  ;; [F] File management
+  (evil-define-key 'normal 'global (kbd "<leader> f d") 'dired)
+  (evil-define-key 'normal 'global (kbd "<leader> f j") 'dired-jump)
+  (evil-define-key 'normal 'global (kbd "<leader> f f") 'find-file)
+  (evil-define-key 'normal 'global (kbd "<leader> f r") 'consult-recent-file)
+  
   ;; Buffer management keybindings
   (evil-define-key 'normal 'global (kbd "] b") 'switch-to-next-buffer) ;; Switch to next buffer
   (evil-define-key 'normal 'global (kbd "[ b") 'switch-to-prev-buffer) ;; Switch to previous buffer
@@ -1042,15 +1060,19 @@
   (evil-define-key 'normal 'global (kbd "<leader> b l") 'consult-buffer) ;; Consult buffer
   (evil-define-key 'normal 'global (kbd "<leader>SPC") 'consult-buffer) ;; Consult buffer
 
-  ;; Project management keybindings
-  (evil-define-key 'normal 'global (kbd "<leader> p b") 'consult-project-buffer) ;; Consult project buffer
-  (evil-define-key 'normal 'global (kbd "<leader> p p") 'project-switch-project) ;; Switch project
-  (evil-define-key 'normal 'global (kbd "<leader> p f") 'project-find-file) ;; Find file in project
-  (evil-define-key 'normal 'global (kbd "<leader> p g") 'project-find-regexp) ;; Find regexp in project
-  (evil-define-key 'normal 'global (kbd "<leader> p k") 'project-kill-buffers) ;; Kill project buffers
-  (evil-define-key 'normal 'global (kbd "<leader> p D") 'project-dired) ;; Dired for project
+  ;; [W] Remapping C-w -> SPC w
+  (define-key evil-normal-state-map (kbd "<leader> w") evil-window-map)
+  (define-key evil-visual-state-map (kbd "<leader> w") evil-window-map)
 
-  ;; Notes by Denote
+  ;; [P] Project management keybindings
+  (let ((cxp-map (lookup-key ctl-x-map (kbd "p"))))
+    (when cxp-map
+      ;; Bind it to SPC p in normal and visual states
+      (define-key evil-normal-state-map (kbd "<leader> p") cxp-map)
+      (define-key evil-visual-state-map (kbd "<leader> p") cxp-map)))
+   (evil-define-key 'normal 'global (kbd "<leader> p b") 'consult-project-buffer) ;; Consult project buffer
+
+  ;; [D] Notes/Journal by Denote
   (evil-define-key 'normal 'global (kbd "<leader> n n") 'denote) ;; New note
   (evil-define-key 'normal 'global (kbd "<leader> n d") 'denote-dired) ;; Open dired
   (evil-define-key 'normal 'global (kbd "<leader> n g") 'denote-grep) ;; Search in note
@@ -1062,6 +1084,10 @@
   (evil-define-key 'normal 'global (kbd "<leader> n r") 'denote-rename-file) ;; Rename file and update existing front matter if appropriate.
   (evil-define-key 'normal 'global (kbd "<leader> n R") 'denote-rename-file-using-front-matter) ;; Rename FILE using its front matter as input.
 
+  ;; Denote journal
+  (evil-define-key 'normal 'global (kbd "<leader> n j") 'denote-journal-new-or-existing-entry) ;; New journal entry
+  (evil-define-key 'normal 'global (kbd "<leader> n J") 'denote-journal-link-or-create-entry) ;; Link to journal entry
+
   ;; Denote dired
   (with-eval-after-load 'dired
     (evil-define-key 'normal dired-mode-map
@@ -1070,9 +1096,12 @@
       (kbd "<leader> n r") 'denote-dired-rename-marked-files-with-keywords ;; Rename a Dired marked file to a Denote file
       (kbd "<leader> n R") 'denote-dired-rename-marked-files-using-front-matter)) ;; Rename FILE using its front matter as input.
 
-  ;; Denote Journal
-  (evil-define-key 'normal 'global (kbd "<leader> j j") 'denote-journal-new-or-existing-entry) ;; New journal entry
-  (evil-define-key 'normal 'global (kbd "<leader> j l") 'denote-journal-link-or-create-entry) ;; Link to journal entry
+  ;; [J] Jump around
+  (evil-define-key 'normal 'global (kbd "<leader> j j") 'casual-avy-tmenu)     ;; Avy menu
+  (evil-define-key 'normal 'global (kbd "<leader> j c") 'avy-goto-char)        ;; Jump to a single character
+  (evil-define-key 'normal 'global (kbd "<leader> j w") 'avy-goto-word-1)      ;; Jump to the beginning of a word
+  (evil-define-key 'normal 'global (kbd "<leader> j l") 'avy-goto-line)        ;; Jump to a line number
+  (evil-define-key 'normal 'global (kbd "<leader> j t") 'avy-goto-char-timer)  ;; Jump using multi-character timer
 
   ;; Yank from kill ring
   (evil-define-key 'normal 'global (kbd "P") 'consult-yank-from-kill-ring)
