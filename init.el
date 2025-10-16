@@ -1455,5 +1455,23 @@
   (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
   (global-undo-fu-session-mode))
 
+;; --- Avy: jump to visible text with minimal setup ---
+(use-package avy
+  :defer t
+  :straight t
+  :commands (avy-goto-char avy-goto-word-1 avy-goto-line avy-goto-char-timer)
+  :config
+  (setq avy-timeout-seconds 0.5
+        avy-background t
+        avy-all-windows t)
+;; Combined greyed-out foreground + dark background
+  (custom-set-faces
+   '(avy-background-face ((t (:foreground "#7c7c8a" :background "#1e1e2e"))))))
+
+;; --- Casual-avy: makes avy commands easier to explore via a transient menu ---
+(use-package casual-avy
+  :straight (casual-avy :host github :repo "kickingvegas/casual-avy")
+  :after avy)
+
 (provide 'init)
 ;;; init.el ends here
