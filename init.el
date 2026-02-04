@@ -82,7 +82,7 @@
 ;; different constructs in your Emacs config.
 ;;
 ;; If you encounter any errors while installing Emacs-Kick,
-;; check the *Messages* buffer for more information. You can switch
+;; check the *Messages* buffer for more information.  You can switch
 ;; buffers using `<leader> SPC`, and all option menus can be navigated
 ;; with `C-p` and `C-n`.
 ;;
@@ -496,57 +496,26 @@
 (use-package org
   :ensure nil     ;; This is built-in, no need to fetch it.
   :defer t        ;; Defer loading Org-mode until it's needed.
+  :init
+  (setq org-agenda-files '("~/Documents/denote"))
+  :custom
+  (org-file-apps
+   '((auto-mode . emacs)
+     ("\\.pdf\\'" . "xdg-open %s")))
   :hook
   (org-mode . visual-line-mode))     ;; Line wrapping for org.
 
-(use-package org-superstar
+;;; External package but related to org
+(use-package org-modern
   :straight t
-  :after org
-  :hook (org-mode . org-superstar-mode))
-
-;;; DENOTE
-(use-package denote
-  :straight t
-  :commands (denote denote-dired)
   :defer t
   :ensure t
+  :custom
+  (org-modern-star 'replace)
+  (org-modern-hide-stars ".")
   :hook
-  ( ;; Apply colours to Denote names in Dired.  This applies to all
-   ;; directories.  Check `denote-dired-directories' for the specific
-   ;; directories you may prefer instead.  Then, instead of
-   ;; `denote-dired-mode', use `denote-dired-mode-in-directories'.
-   (dired-mode . denote-dired-mode))
-  :config
-  (setq denote-directory (expand-file-name "~/Documents/denote/"))
-  (setq denote-save-buffers nil) ;; Control whether to save buffers automatically
-  (setq denote-infer-keywords t) ;; Whether to infer keywords form existing note files
-  (setq denote-sort-keywords t)  ;; Whether to sort keywords in new files
-  (setq denote-prompts '(title keywords))
-  (setq denote-excluded-directories-regexp nil)
-  (setq denote-excluded-keywords-regexp nil)
-  (setq denote-rename-confirmations '(rewrite-front-matter modify-file-name))
+  (org-mode . org-modern-mode))
 
-  ;; Pick dates, where relevant, with Org's advanced interface:
-  (setq denote-date-prompt-use-org-read-date t)
-
-  ;; Automatically rename Denote buffers using the `denote-rename-buffer-format'.
-  (denote-rename-buffer-mode 1))
-
-(use-package denote-journal
-  :straight t
-  :defer t
-  :ensure t
-  :hook (calendar-mode . denote-journal-calendar-mode)
-  :config
-  ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
-  ;; to nil to use the `denote-directory' instead.
-  (setq denote-journal-directory
-        (expand-file-name "journal" denote-directory))
-  ;; Default keyword for new journal entries. It can also be a list of
-  ;; strings.
-  (setq denote-journal-keyword "journal")
-  ;; Read the doc string of `denote-journal-title-format'.
-  (setq denote-journal-title-format 'day-date-month-year))
 
 ;;; WHICH-KEY
 ;; `which-key' is an Emacs package that displays available keybindings in a
@@ -560,6 +529,12 @@
   :hook
   (after-init . which-key-mode)) ;; Enable which-key mode after initialization.
 
+;;; WHITESPACE
+;; Deletes all trailing white-spaces when saving files.
+(use-package whitespace
+  :ensure nil
+  :defer t
+  :hook (before-save . whitespace-cleanup))
 
 ;;; ==================== EXTERNAL PACKAGES ====================
 ;;
@@ -904,7 +879,7 @@
   (setq magit-display-buffer-function
         #'magit-display-buffer-fullframe-status-v1)
   (if ek-use-nerd-fonts   ;; Check if nerd fonts are being used
-	  (setopt magit-format-file-function #'magit-format-file-nerd-icons)) ;; Turns on magit nerd-icons
+      (setopt magit-format-file-function #'magit-format-file-nerd-icons)) ;; Turns on magit nerd-icons
   :defer t)
 
 
@@ -1005,6 +980,7 @@
   (evil-define-key 'normal 'global (kbd "<leader> s r") 'consult-ripgrep)
   (evil-define-key 'normal 'global (kbd "<leader> s h") 'consult-info)
   (evil-define-key 'normal 'global (kbd "<leader> /") 'consult-line)
+  (evil-define-key 'normal 'global (kbd "<leader> s o") 'consult-outline)
   (evil-define-key 'normal 'global (kbd "<leader> s i") 'consult-imenu)
   (evil-define-key 'normal 'global (kbd "<leader> s I") 'consult-imenu-multi)
 
@@ -1027,27 +1003,27 @@
   (evil-define-key 'normal 'global (kbd "<leader> g d") 'magit-diff-buffer-file) ;; Show diff for the current file
   (evil-define-key 'normal 'global (kbd "<leader> g D") 'diff-hl-show-hunk) ;; Show diff for a hunk
   (evil-define-key 'normal 'global (kbd "<leader> g b") 'vc-annotate)       ;; Annotate buffer with version control info
-  
+
   ;; [R] Registers / Marks / Bookmark keybindings
   ;; Simplest form of jump back points
-  (evil-define-key 'normal 'global (kbd "<leader> r m") 'consult-mark) ;; Jump to a marker in markers list set by C-SPC  
+  (evil-define-key 'normal 'global (kbd "<leader> r m") 'consult-mark) ;; Jump to a marker in markers list set by C-SPC
   (evil-define-key 'normal 'global (kbd "<leader> r M") 'consult-global-mark) ;; Global jump to a marker in markers list
- 
+
   ;; A little more than marks, more versatile
   (evil-define-key 'normal 'global (kbd "<leader> r r") 'consult-register) ;; List, preview and jump/insert all registers
-  (evil-define-key 'normal 'global (kbd "<leader> r l") 'consult-register-load) ;; Insert tet or jump to a register 
+  (evil-define-key 'normal 'global (kbd "<leader> r l") 'consult-register-load) ;; Insert tet or jump to a register
   (evil-define-key 'normal 'global (kbd "<leader> r s") 'consult-register-store) ;; Store text or region into a register
-  
+
   ;; Think of persistent named marks
-  (evil-define-key 'normal 'global (kbd "<leader> r b") 'consult-bookmark) ;; Bookmark or jump to 
-  (evil-define-key 'normal 'global (kbd "<leader> r B") 'bookmark-delete) ;; Delete Bookmark 
+  (evil-define-key 'normal 'global (kbd "<leader> r b") 'consult-bookmark) ;; Bookmark or jump to
+  (evil-define-key 'normal 'global (kbd "<leader> r B") 'bookmark-delete) ;; Delete Bookmark
 
   ;; [F] File management
   (evil-define-key 'normal 'global (kbd "<leader> f d") 'dired)
   (evil-define-key 'normal 'global (kbd "<leader> f j") 'dired-jump)
   (evil-define-key 'normal 'global (kbd "<leader> f f") 'find-file)
   (evil-define-key 'normal 'global (kbd "<leader> f r") 'consult-recent-file)
-  
+
   ;; Buffer management keybindings
   (evil-define-key 'normal 'global (kbd "] b") 'switch-to-next-buffer) ;; Switch to next buffer
   (evil-define-key 'normal 'global (kbd "[ b") 'switch-to-prev-buffer) ;; Switch to previous buffer
@@ -1402,6 +1378,57 @@
 
   ;; Load the Catppuccin theme without prompting for confirmation.
   (load-theme 'catppuccin :no-confirm))
+
+;;; DENOTE
+(use-package denote
+  :straight t
+  :commands (denote denote-dired)
+  :defer t
+  :ensure t
+  :hook
+  ( ;; Apply colours to Denote names in Dired.  This applies to all
+   ;; directories.  Check `denote-dired-directories' for the specific
+   ;; directories you may prefer instead.  Then, instead of
+   ;; `denote-dired-mode', use `denote-dired-mode-in-directories'.
+   (dired-mode . denote-dired-mode))
+  :config
+  (setq denote-directory (expand-file-name "~/Documents/denote/"))
+  (setq denote-save-buffers nil) ;; Control whether to save buffers automatically
+  (setq denote-infer-keywords t) ;; Whether to infer keywords form existing note files
+  (setq denote-sort-keywords t)  ;; Whether to sort keywords in new files
+  (setq denote-prompts '(title keywords))
+  (setq denote-excluded-directories-regexp nil)
+  (setq denote-excluded-keywords-regexp nil)
+  (setq denote-rename-confirmations '(rewrite-front-matter modify-file-name))
+
+  ;; Pick dates, where relevant, with Org's advanced interface:
+  (setq denote-date-prompt-use-org-read-date t)
+
+  ;; Automatically rename Denote buffers using the `denote-rename-buffer-format'.
+  (denote-rename-buffer-mode 1))
+
+(use-package denote-journal
+  :straight t
+  :defer t
+  :ensure t
+  :hook (calendar-mode . denote-journal-calendar-mode)
+  :config
+  ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
+  ;; to nil to use the `denote-directory' instead.
+  (setq denote-journal-directory
+        (expand-file-name "journal" denote-directory))
+  ;; Default keyword for new journal entries. It can also be a list of
+  ;; strings.
+  (setq denote-journal-keyword "journal")
+  ;; Read the doc string of `denote-journal-title-format'.
+  (setq denote-journal-title-format 'day-date-month-year))
+
+
+;; Origami text folding
+(use-package origami
+  :straight (origami :host github :repo "elp-revive/origami.el")
+  :defer t
+  :hook (prog-mode . origami-mode))
 
 
 ;;; UTILITARY FUNCTION TO INSTALL EMACS-KICK
