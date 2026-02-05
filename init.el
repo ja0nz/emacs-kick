@@ -322,13 +322,12 @@
 ;; While this kickstarter focuses on essential configurations, I wanted to present
 ;; ERC as a glimpse into Emacs's versatility. With ERC, you can seamlessly connect
 ;; to IRC channels and interact with communities without leaving your editor.
-(use-package erc
-  :defer t ;; Load ERC when needed rather than at startup. (Load it with `M-x erc RET')
-  :custom
-  (erc-join-buffer 'window)                                        ;; Open a new window for joining channels.
-  (erc-hide-list '("JOIN" "PART" "QUIT"))                          ;; Hide messages for joins, parts, and quits to reduce clutter.
-  (erc-timestamp-format "[%H:%M]")                                 ;; Format for timestamps in messages.
-  (erc-autojoin-channels-alist '((".*\\.libera\\.chat" "#emacs"))));; Automatically join the #emacs channel on Libera.Chat.
+;; (use-package erc
+;;   :custom
+;;   (erc-join-buffer 'window)                                        ;; Open a new window for joining channels.
+;;   (erc-hide-list '("JOIN" "PART" "QUIT"))                          ;; Hide messages for joins, parts, and quits to reduce clutter.
+;;   (erc-timestamp-format "[%H:%M]")                                 ;; Format for timestamps in messages.
+;;   (erc-autojoin-channels-alist '((".*\\.libera\\.chat" "#emacs"))));; Automatically join the #emacs channel on Libera.Chat.
 
 
 ;;; ISEARCH
