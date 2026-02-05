@@ -1342,6 +1342,23 @@
   :ensure (:type git :host github :repo "elp-revive/origami.el")
   :hook (prog-mode . origami-mode))
 
+(use-package eat
+  :ensure (:type git
+             :host codeberg
+             :repo "akib/emacs-eat"
+             :files ("*.el" ("term" "term/*.el") "*.texi"
+                     "*.ti" ("terminfo/e" "terminfo/e/*")
+                     ("terminfo/65" "terminfo/65/*")
+                     ("integration" "integration/*")
+                     (:exclude ".dir-locals.el" "*-tests.el")))
+  :custom
+  (eat-kill-buffer-on-exit t))
+
+;;; MISE
+(use-package mise
+  :ensure t
+  :defer t
+  :hook (elpaca-after-init . global-mise-mode))
 
 ;;; UTILITARY FUNCTION TO INSTALL EMACS-KICK
 (defun ek/first-install ()
