@@ -95,58 +95,6 @@
 
 ;;; Code:
 
-;; Performance Hacks
-;; Emacs is an Elisp interpreter, and when running programs or packages,
-;; it can occasionally experience pauses due to garbage collection.
-;; By increasing the garbage collection threshold, we reduce these pauses
-;; during heavy operations, leading to smoother performance.
-(setq gc-cons-threshold #x40000000)
-
-;; Set the maximum output size for reading process output, allowing for larger data transfers.
-(setq read-process-output-max (* 1024 1024 4))
-
-;; Do I really need a speedy startup?
-;; Well, this config launches Emacs in about ~0.3 seconds,
-;; which, in modern terms, is a miracle considering how fast it starts
-;; with external packages.
-;; It wasn’t until the recent introduction of tools for lazy loading
-;; that a startup time of less than 20 seconds was even possible.
-;; Other fast startup methods were introduced over time.
-;; You may have heard of people running Emacs as a server,
-;; where you start it once and open multiple clients instantly connected to that server.
-;; Some even run Emacs as a systemd or sysV service, starting when the machine boots.
-;; While this is a great way of using Emacs, we WON’T be doing that here.
-;; I think 0.3 seconds is fast enough to avoid issues that could arise from
-;; running Emacs as a server, such as 'What version of Node is my LSP using?'.
-;; Again, this setup configures Emacs much like how a Vimmer would configure Neovim.
-
-
-;; Emacs comes with a built-in package manager (`package.el'), and we'll use it
-;; when it makes sense. However, `straight.el' is a bit more user-friendly and
-;; reproducible, especially for newcomers and shareable configs like emacs-kick.
-;; So we bootstrap it here.
-(setq package-enable-at-startup nil) ;; Disables the default package manager.
-
-;; Bootstraps `straight.el'
-(setq straight-check-for-modifications nil)
-(defvar bootstrap-version)
-(let ((bootstrap-file
-       (expand-file-name
-        "straight/repos/straight.el/bootstrap.el"
-        (or (bound-and-true-p straight-base-dir)
-            user-emacs-directory)))
-      (bootstrap-version 7))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-(straight-use-package '(project :type built-in))
-(straight-use-package 'use-package)
-
 
 ;; In Emacs, a package is a collection of Elisp code that extends the editor's functionality,
 ;; much like plugins do in Neovim. We need to import this package to add package archives.
@@ -177,7 +125,6 @@
 ;;
 ;; (use-package some-package
 ;;   :ensure t     ;; Ensure the package is installed (used with package.el).
-;;   :straight t   ;; Use straight.el to install and manage this package.
 ;;   :config       ;; Configuration settings for the package.
 ;;   ;; Additional settings can go here.
 ;; )
@@ -185,7 +132,7 @@
 ;; This approach simplifies package management, enabling us to easily control
 ;; both built-in (first-party) and external (third-party) packages. While Emacs
 ;; is a vast and powerful editor, using `use-package`—especially in combination
-;; with `straight.el`—helps streamline our configuration for better organization,
+;; with `elpaca.el`—helps streamline our configuration for better organization,
 ;; reproducibility, and customization. As we proceed, you'll see smaller
 ;; `use-package` declarations for specific packages, which will help us enable
 ;; the desired features and improve our workflow.
@@ -274,7 +221,7 @@
   (modify-coding-system-alist 'file "" 'utf-8)
 
   ;; Add a hook to run code after Emacs has fully initialized.
-  (add-hook 'after-init-hook
+  (add-hook 'elpaca-after-init-hook
             (lambda ()
               (message "Emacs has fully loaded. This code runs after startup.")
 
@@ -287,7 +234,7 @@
 ;;    Packages     : %s
 "
                          (emacs-init-time)
-                         (length (hash-table-keys straight--recipe-cache))))))))
+                         (length elpaca-repos-directory)))))))
 
 
 ;;; WINDOW
@@ -507,7 +454,6 @@
 
 ;;; External package but related to org
 (use-package org-modern
-  :straight t
   :defer t
   :ensure t
   :custom
@@ -527,7 +473,7 @@
   :ensure nil     ;; This is built-in, no need to fetch it.
   :defer t        ;; Defer loading Which-Key until after init.
   :hook
-  (after-init . which-key-mode)) ;; Enable which-key mode after initialization.
+  (elpaca-after-init . which-key-mode)) ;; Enable which-key mode after initialization.
 
 ;;; WHITESPACE
 ;; Deletes all trailing white-spaces when saving files.
@@ -558,9 +504,8 @@
 ;; it easier to choose the correct one without typing out the entire string.
 (use-package vertico
   :ensure t
-  :straight t
   :hook
-  (after-init . vertico-mode)           ;; Enable vertico after Emacs has initialized.
+  (elpaca-after-init . vertico-mode)           ;; Enable vertico after Emacs has initialized.
   :custom
   (vertico-count 10)                    ;; Number of candidates to display in the completion list.
   (vertico-resize nil)                  ;; Disable resizing of the vertico minibuffer.
@@ -586,7 +531,6 @@
 ;; This combination provides a powerful and customizable completion experience.
 (use-package orderless
   :ensure t
-  :straight t
   :defer t                                    ;; Load Orderless on demand.
   :after vertico                              ;; Ensure Vertico is loaded before Orderless.
   :init
@@ -602,9 +546,8 @@
 ;; information, making it easier to choose the right option.
 (use-package marginalia
   :ensure t
-  :straight t
   :hook
-  (after-init . marginalia-mode))
+  (elpaca-after-init . marginalia-mode))
 
 
 ;;; CONSULT
@@ -614,7 +557,6 @@
 ;; navigating buffers, files, and xrefs with ease.
 (use-package consult
   :ensure t
-  :straight t
   :defer t
   :init
   ;; Enhance register preview with thin lines and no mode line.
@@ -633,7 +575,6 @@
 ;; Just `<leader> .' over any text, explore it :)
 (use-package embark
   :ensure t
-  :straight t
   :defer t)
 
 
@@ -642,7 +583,6 @@
 ;; that Consult commands, like previews, are available when using Embark.
 (use-package embark-consult
   :ensure t
-  :straight t
   :hook
   (embark-collect-mode . consult-preview-at-point-mode)) ;; Enable preview in Embark collect mode.
 
@@ -655,7 +595,6 @@
 ;; programming languages.
 (use-package treesit-auto
   :ensure t
-  :straight t
   :after emacs
   :custom
   (treesit-auto-install 'prompt)
@@ -671,7 +610,6 @@
 ;; to use GitHub Flavored Markdown for enhanced compatibility.
 (use-package markdown-mode
   :defer t
-  :straight t
   :ensure t
   :mode ("README\\.md\\'" . gfm-mode)            ;; Use gfm-mode for README.md files.
   :init (setq markdown-command "multimarkdown")) ;; Set the Markdown processing command.
@@ -685,7 +623,6 @@
 ;; various modes and languages.
 (use-package corfu
   :ensure t
-  :straight t
   :defer t
   :custom
   (corfu-auto nil)                        ;; Only completes when hitting TAB
@@ -709,7 +646,6 @@
 (use-package nerd-icons-corfu
   :if ek-use-nerd-fonts
   :ensure t
-  :straight t
   :defer t
   :after (:all corfu))
 
@@ -730,7 +666,6 @@
 ;;       https://emacs-lsp.github.io/lsp-mode/
 (use-package lsp-mode
   :ensure t
-  :straight t
   :defer t
   :hook (;; Replace XXX-mode with concrete major mode (e.g. python-mode)
          (lsp-mode . lsp-enable-which-key-integration)  ;; Integrate with Which Key
@@ -798,7 +733,6 @@
 ;; different languages and frameworks.
 (use-package lsp-tailwindcss
   :ensure t
-  :straight t
   :defer t
   :config
   (add-to-list 'lsp-language-id-configuration '(".*\\.erb$" . "html")) ;; Associate ERB files with HTML.
@@ -818,7 +752,6 @@
 ;; Useful for graphical Emacs; terminal users may want to fall back to `eldoc-box-display-at-point-mode'.
 (use-package eldoc-box
   :ensure t
-  :straight t
   :defer t)
 
 
@@ -836,7 +769,6 @@
 ;; a comparable experience in Emacs with its own set of customizations.
 (use-package diff-hl
   :defer t
-  :straight t
   :ensure t
   :hook
   (find-file . (lambda ()
@@ -873,7 +805,6 @@
 ;; extend the powerful capabilities that Magit offers in Emacs.
 (use-package magit
   :ensure t
-  :straight t
   :config
   ;; Magit in full screen
   (setq magit-display-buffer-function
@@ -891,10 +822,9 @@
 ;; smooth workflow when working across multiple environments.
 (use-package xclip
   :ensure t
-  :straight t
   :defer t
   :hook
-  (after-init . xclip-mode))     ;; Enable xclip mode after initialization.
+  (elpaca-after-init . xclip-mode))     ;; Enable xclip mode after initialization.
 
 
 ;;; INDENT-GUIDE
@@ -905,7 +835,6 @@
 ;; the code.
 (use-package indent-guide
   :defer t
-  :straight t
   :ensure t
   :hook
   (prog-mode . indent-guide-mode)  ;; Activate indent-guide in programming modes.
@@ -931,7 +860,6 @@
 ;; properly utilized.
 (use-package add-node-modules-path
   :ensure t
-  :straight t
   :defer t
   :custom
   ;; Makes sure you are using the local bin for your
@@ -953,10 +881,9 @@
 ;; experience.
 (use-package evil
   :ensure t
-  :straight t
   :defer t
   :hook
-  (after-init . evil-mode)
+  (elpaca-after-init . evil-mode)
   :init
   (setq evil-want-integration t)      ;; Integrate `evil' with other Emacs features (optional as it's true by default).
   (setq evil-want-keybinding nil)     ;; Disable default keybinding to set custom ones.
@@ -1157,7 +1084,6 @@
 ;; commands to fit the `evil' style.
 (use-package evil-collection
   :defer t
-  :straight t
   :ensure t
   :custom
   (evil-collection-want-find-usages-bindings t)
@@ -1180,7 +1106,6 @@
 ;; - https://github.com/emacs-evil/evil-surround?tab=readme-ov-file#examples
 (use-package evil-surround
   :ensure t
-  :straight t
   :after evil-collection
   :config
   (global-evil-surround-mode 1))
@@ -1194,7 +1119,6 @@
 ;; Just use % for jumping between matching structures to check it out.
 (use-package evil-matchit
   :ensure t
-  :straight t
   :after evil-collection
   :config
   (global-evil-matchit-mode 1))
@@ -1208,9 +1132,8 @@
 ;; (use-package undo-tree
 ;;   :defer t
 ;;   :ensure t
-;;   :straight t
 ;;   :hook
-;;   (after-init . global-undo-tree-mode)
+;;   (elpaca-after-init . global-undo-tree-mode)
 ;;   :init
 ;;   (setq undo-tree-visualizer-timestamps t
 ;;         undo-tree-visualizer-diff t
@@ -1232,7 +1155,6 @@
 ;; a different color, making it easier to match pairs visually.
 (use-package rainbow-delimiters
   :defer t
-  :straight t
   :ensure t
   :hook
   (prog-mode . rainbow-delimiters-mode))
@@ -1242,7 +1164,6 @@
 ;; A simple major mode to provide .env files with color highlighting
 (use-package dotenv-mode
   :defer t
-  :straight t
   :ensure t
   :config)
 
@@ -1255,10 +1176,9 @@
 ;; jumping to definitions.
 (use-package pulsar
   :defer t
-  :straight t
   :ensure t
   :hook
-  (after-init . pulsar-global-mode)
+  (elpaca-after-init . pulsar-global-mode)
   :config
   (setq pulsar-pulse t)
   (setq pulsar-delay 0.025)
@@ -1283,7 +1203,6 @@
 ;; experience by displaying relevant information in a compact format.
 (use-package doom-modeline
   :ensure t
-  :straight t
   :defer t
   :custom
   (doom-modeline-buffer-file-name-style 'buffer-name)  ;; Set the buffer file name style to just the buffer name (without path).
@@ -1295,7 +1214,7 @@
       (setq doom-modeline-icon t)                      ;; Enable icons in the mode line if nerd fonts are used.
     (setq doom-modeline-icon nil))                     ;; Disable icons if nerd fonts are not being used.
   :hook
-  (after-init . doom-modeline-mode))
+  (elpaca-after-init . doom-modeline-mode))
 
 
 ;;; NEOTREE
@@ -1304,7 +1223,6 @@
 ;; and integrates with version control to show file states.
 (use-package neotree
   :ensure t
-  :straight t
   :custom
   (neo-show-hidden-files t)                ;; By default shows hidden files (toggle with H)
   (neo-theme 'nerd)                        ;; Set the default theme for Neotree to 'nerd' for a visually appealing look.
@@ -1334,7 +1252,6 @@
 (use-package nerd-icons-dired
   :if ek-use-nerd-fonts                   ;; Load the package only if the user has configured to use nerd fonts.
   :ensure t                               ;; Ensure the package is installed.
-  :straight t
   :defer t                                ;; Load the package only when needed to improve startup time.
   :hook
   (dired-mode . nerd-icons-dired-mode))
@@ -1348,7 +1265,6 @@
 (use-package nerd-icons-completion
   :if ek-use-nerd-fonts                   ;; Load the package only if the user has configured to use nerd fonts.
   :ensure t                               ;; Ensure the package is installed.
-  :straight t
   :after (:all nerd-icons marginalia)     ;; Load after `nerd-icons' and `marginalia' to ensure proper integration.
   :config
   (nerd-icons-completion-mode)            ;; Activate nerd icons for completion interfaces.
@@ -1362,7 +1278,6 @@
 ;; with soft colors that are easy on the eyes.
 (use-package catppuccin-theme
   :ensure t
-  :straight t
   :config
   (custom-set-faces
    ;; Set the color for changes in the diff highlighting to blue.
@@ -1381,7 +1296,6 @@
 
 ;;; DENOTE
 (use-package denote
-  :straight t
   :commands (denote denote-dired)
   :defer t
   :ensure t
@@ -1408,7 +1322,6 @@
   (denote-rename-buffer-mode 1))
 
 (use-package denote-journal
-  :straight t
   :defer t
   :ensure t
   :hook (calendar-mode . denote-journal-calendar-mode)
@@ -1426,8 +1339,8 @@
 
 ;; Origami text folding
 (use-package origami
-  :straight (origami :host github :repo "elp-revive/origami.el")
   :defer t
+  :ensure (:type git :host github :repo "elp-revive/origami.el")
   :hook (prog-mode . origami-mode))
 
 
@@ -1452,7 +1365,6 @@
 ;;; NIX MODE
 (use-package nix-mode
   :ensure t
-  :straight t
   :defer t
   :mode "\\.nix\\'")
 
@@ -1461,15 +1373,13 @@
 ;; Keeps Emacs' environment in sync with the shell and allows approving `.envrc` files from within Emacs.
 (use-package envrc
   :ensure t
-  :straight t
   :defer t
-  :hook (after-init . envrc-global-mode))
+  :hook (elpaca-after-init . envrc-global-mode))
 
 ;;; VUNDO
 ;; Provides a visual, interactive undo tree in Emacs, letting you browse and selectively undo or redo changes
 (use-package vundo
   :commands (vundo)
-  :straight t
   :config
   (setq vundo-popup-mode t)
   (setq vundo-glyph-alist vundo-unicode-symbols)
@@ -1494,12 +1404,10 @@
         ("D" . vundo--debug)))
 
 (use-package undo-fu
-  :ensure t
-  :straight t)
+  :ensure t)
 
 (use-package undo-fu-session
   :ensure t
-  :straight t
   :after undo-fu
   :custom
   ;; Set the undo session directory relative to the current init directory
@@ -1514,7 +1422,6 @@
 ;; --- Avy: jump to visible text with minimal setup ---
 (use-package avy
   :defer t
-  :straight t
   :commands (avy-goto-char avy-goto-word-1 avy-goto-line avy-goto-char-timer)
   :config
   (setq avy-timeout-seconds 0.5
@@ -1526,7 +1433,7 @@
 
 ;; --- Casual-avy: makes avy commands easier to explore via a transient menu ---
 (use-package casual-avy
-  :straight (casual-avy :host github :repo "kickingvegas/casual-avy")
+  :ensure (:type git :host github :repo "kickingvegas/casual-avy")
   :after avy)
 
 (provide 'init)
