@@ -359,7 +359,6 @@
 ;; But don't worry, you can always use `M-x command' :)
 (use-package vc
   :ensure nil                        ;; This is built-in, no need to fetch it.
-  :defer t
   :bind
   (("C-x v d" . vc-dir)              ;; Open VC directory for version control status.
    ("C-x v =" . vc-diff)             ;; Show differences for the current file.
@@ -392,7 +391,6 @@
 ;; you how to work with it in case you are curious about it.
 (use-package smerge-mode
   :ensure nil                                  ;; This is built-in, no need to fetch it.
-  :defer t
   :bind (:map smerge-mode-map
               ("C-c ^ u" . smerge-keep-upper)  ;; Keep the changes from the upper version.
               ("C-c ^ l" . smerge-keep-lower)  ;; Keep the changes from the lower version.
@@ -424,7 +422,6 @@
 ;; Flymake mode in programming buffers.
 (use-package flymake
   :ensure nil          ;; This is built-in, no need to fetch it.
-  :defer t
   :hook (prog-mode . flymake-mode)
   :custom
   (flymake-margin-indicators-string
@@ -440,7 +437,6 @@
 ;; it's explicitly needed, which can help speed up Emacs startup time.
 (use-package org
   :ensure nil     ;; This is built-in, no need to fetch it.
-  :defer t        ;; Defer loading Org-mode until it's needed.
   :init
   (setq org-agenda-files '("~/Documents/denote"))
   :custom
@@ -452,7 +448,7 @@
 
 ;;; External package but related to org
 (use-package org-modern
-  :defer t
+  :after org
   :custom
   (org-modern-star 'replace)
   (org-modern-hide-stars ".")
@@ -468,7 +464,6 @@
 ;; and reduces the cognitive load of memorizing every command.
 (use-package which-key
   :ensure nil     ;; This is built-in, no need to fetch it.
-  :defer t        ;; Defer loading Which-Key until after init.
   :hook
   (elpaca-after-init . which-key-mode)) ;; Enable which-key mode after initialization.
 
@@ -476,7 +471,6 @@
 ;; Deletes all trailing white-spaces when saving files.
 (use-package whitespace
   :ensure nil
-  :defer t
   :hook (before-save . whitespace-cleanup))
 
 ;;; ==================== EXTERNAL PACKAGES ====================
@@ -599,7 +593,6 @@
 ;; It’s particularly useful for README files, as it can be set
 ;; to use GitHub Flavored Markdown for enhanced compatibility.
 (use-package markdown-mode
-  :defer t
   :mode ("README\\.md\\'" . gfm-mode)            ;; Use gfm-mode for README.md files.
   :init (setq markdown-command "multimarkdown")) ;; Set the Markdown processing command.
 
@@ -652,7 +645,6 @@
 ;;       Fortunately, `lsp-mode` has a great resource site:
 ;;       https://emacs-lsp.github.io/lsp-mode/
 (use-package lsp-mode
-  :defer t
   :hook (;; Replace XXX-mode with concrete major mode (e.g. python-mode)
          (lsp-mode . lsp-enable-which-key-integration)  ;; Integrate with Which Key
          ((js-mode                                      ;; Enable LSP for JavaScript
@@ -719,7 +711,6 @@
 ;; multiple LSP servers simultaneously, enhancing your coding experience across
 ;; different languages and frameworks.
 (use-package lsp-tailwindcss
-  :defer t
   :after lsp-mode
   :config
   (add-to-list 'lsp-language-id-configuration '(".*\\.erb$" . "html")) ;; Associate ERB files with HTML.
@@ -748,7 +739,6 @@
 ;; changed lines and displaying blame information. `diff-hl' aims to provide
 ;; a comparable experience in Emacs with its own set of customizations.
 (use-package diff-hl
-  :defer t
   :hook
   (find-file . (lambda ()
                  (global-diff-hl-mode)           ;; Enable Diff-HL mode for all files.
@@ -799,7 +789,6 @@
 ;; in Emacs can be pasted in other applications, and vice versa, providing a
 ;; smooth workflow when working across multiple environments.
 (use-package xclip
-  :defer t
   :hook
   (elpaca-after-init . xclip-mode))     ;; Enable xclip mode after initialization.
 
@@ -811,7 +800,6 @@
 ;; level of indentation, helping to improve readability and navigation within
 ;; the code.
 (use-package indent-guide
-  :defer t
   :hook
   (prog-mode . indent-guide-mode)  ;; Activate indent-guide in programming modes.
   :config
@@ -835,7 +823,6 @@
 ;; ensures that the environment is accurate and project-specific tools are
 ;; properly utilized.
 (use-package add-node-modules-path
-  :defer t
   :custom
   ;; Makes sure you are using the local bin for your
   ;; node project. Local eslint, typescript server...
@@ -855,7 +842,6 @@
 ;; operates. This setup configures `evil-mode' to enhance the editing
 ;; experience.
 (use-package evil
-  :defer t
   :hook
   (elpaca-after-init . evil-mode)
   :init
@@ -1057,7 +1043,6 @@
 ;; provides a better modal experience by remapping keybindings and
 ;; commands to fit the `evil' style.
 (use-package evil-collection
-  :defer t
   :custom
   (evil-collection-want-find-usages-bindings t)
   ;; Hook to initialize `evil-collection' when `evil-mode' is activated.
@@ -1101,7 +1086,6 @@
 ;; undo history as a tree structure, making it easier to manage
 ;; changes in your buffers.
 ;; (use-package undo-tree
-;;   :defer t
 ;;   :hook
 ;;   (elpaca-after-init . global-undo-tree-mode)
 ;;   :init
@@ -1124,7 +1108,6 @@
 ;; to enhance readability in programming modes. Each level of nested delimiter is assigned
 ;; a different color, making it easier to match pairs visually.
 (use-package rainbow-delimiters
-  :defer t
   :hook
   (prog-mode . rainbow-delimiters-mode))
 
@@ -1143,7 +1126,6 @@
 ;; actions such as scrolling, error navigation, yanking, deleting, and
 ;; jumping to definitions.
 (use-package pulsar
-  :defer t
   :hook
   (elpaca-after-init . pulsar-global-mode)
   :config
@@ -1169,7 +1151,6 @@
 ;; and functional. It integrates well with various Emacs features, enhancing the overall user
 ;; experience by displaying relevant information in a compact format.
 (use-package doom-modeline
-  :defer t
   :custom
   (doom-modeline-buffer-file-name-style 'buffer-name)  ;; Set the buffer file name style to just the buffer name (without path).
   (doom-modeline-project-detection 'project)           ;; Enable project detection for displaying the project name.
@@ -1214,7 +1195,6 @@
 ;; interface by making it easier to identify file types at a glance.
 (use-package nerd-icons-dired
   :if ek-use-nerd-fonts                   ;; Load the package only if the user has configured to use nerd fonts.
-  :defer t                                ;; Load the package only when needed to improve startup time.
   :hook
   (dired-mode . nerd-icons-dired-mode))
 
@@ -1257,7 +1237,6 @@
 ;;; DENOTE
 (use-package denote
   :commands (denote denote-dired)
-  :defer t
   :hook
   ( ;; Apply colours to Denote names in Dired.  This applies to all
    ;; directories.  Check `denote-dired-directories' for the specific
@@ -1281,7 +1260,6 @@
   (denote-rename-buffer-mode 1))
 
 (use-package denote-journal
-  :defer t
   :hook (calendar-mode . denote-journal-calendar-mode)
   :config
   ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
@@ -1297,7 +1275,6 @@
 
 ;; Origami text folding
 (use-package origami
-  :defer t
   :ensure (:type git :host github :repo "elp-revive/origami.el")
   :hook (prog-mode . origami-mode))
 
@@ -1315,7 +1292,6 @@
 
 ;;; MISE
 (use-package mise
-  :defer t
   :hook (elpaca-after-init . global-mise-mode))
 
 ;;; UTILITARY FUNCTION TO INSTALL EMACS-KICK
@@ -1338,14 +1314,12 @@
 ;;; Enhancing emacs.kick for my need
 ;;; NIX MODE
 (use-package nix-mode
-  :defer t
   :mode "\\.nix\\'")
 
 ;;; ENVRC
 ;; Integrates direnv with Emacs, automatically loading project-specific environment variables from `.envrc`.
 ;; Keeps Emacs' environment in sync with the shell and allows approving `.envrc` files from within Emacs.
 (use-package envrc
-  :defer t
   :hook (elpaca-after-init . envrc-global-mode))
 
 ;;; VUNDO
@@ -1391,7 +1365,6 @@
 
 ;; --- Avy: jump to visible text with minimal setup ---
 (use-package avy
-  :defer t
   :commands (avy-goto-char avy-goto-word-1 avy-goto-line avy-goto-char-timer)
   :config
   (setq avy-timeout-seconds 0.5
