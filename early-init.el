@@ -31,6 +31,8 @@
 (setq package-enable-at-startup nil) ;; Disables the default package manager.
 
 (defvar elpaca-installer-version 0.11)
+(defvar elpaca-core-date
+      (list (string-to-number (format-time-string "%Y%m%d" emacs-build-time))))
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
@@ -70,8 +72,7 @@
 (elpaca `(,@elpaca-order))
 
 (elpaca elpaca-use-package
-  ;; Enable use-package :ensure support for Elpaca.
-  ;;(setq use-package-always-ensure t)
+  (setq use-package-always-ensure t)
   ;;(setq use-package-always-defer t)
   (elpaca-use-package-mode))
 

@@ -124,7 +124,6 @@
 ;; look like this:
 ;;
 ;; (use-package some-package
-;;   :ensure t     ;; Ensure the package is installed (used with package.el).
 ;;   :config       ;; Configuration settings for the package.
 ;;   ;; Additional settings can go here.
 ;; )
@@ -454,7 +453,6 @@
 ;;; External package but related to org
 (use-package org-modern
   :defer t
-  :ensure t
   :custom
   (org-modern-star 'replace)
   (org-modern-hide-stars ".")
@@ -502,7 +500,6 @@
 ;; Vertico helps by showing a dynamic list of potential completions, making
 ;; it easier to choose the correct one without typing out the entire string.
 (use-package vertico
-  :ensure t
   :hook
   (elpaca-after-init . vertico-mode)           ;; Enable vertico after Emacs has initialized.
   :custom
@@ -529,7 +526,6 @@
 ;; regular expressions to find files, buffers, and commands more efficiently.
 ;; This combination provides a powerful and customizable completion experience.
 (use-package orderless
-  :ensure t
   :defer t                                    ;; Load Orderless on demand.
   :after vertico                              ;; Ensure Vertico is loaded before Orderless.
   :init
@@ -544,7 +540,6 @@
 ;; helpful annotations such as documentation and other relevant
 ;; information, making it easier to choose the right option.
 (use-package marginalia
-  :ensure t
   :hook
   (elpaca-after-init . marginalia-mode))
 
@@ -555,7 +550,6 @@
 ;; features like previews and enhanced register management. It's useful for
 ;; navigating buffers, files, and xrefs with ease.
 (use-package consult
-  :ensure t
   :defer t
   :init
   ;; Enhance register preview with thin lines and no mode line.
@@ -573,7 +567,6 @@
 ;; actions on the candidates.
 ;; Just `<leader> .' over any text, explore it :)
 (use-package embark
-  :ensure t
   :defer t)
 
 
@@ -581,7 +574,6 @@
 ;; Embark-Consult provides a bridge between Embark and Consult, ensuring
 ;; that Consult commands, like previews, are available when using Embark.
 (use-package embark-consult
-  :ensure t
   :hook
   (embark-collect-mode . consult-preview-at-point-mode)) ;; Enable preview in Embark collect mode.
 
@@ -593,7 +585,6 @@
 ;; code parsing capabilities, making it easier to work with modern
 ;; programming languages.
 (use-package treesit-auto
-  :ensure t
   :after emacs
   :custom
   (treesit-auto-install 'prompt)
@@ -609,7 +600,6 @@
 ;; to use GitHub Flavored Markdown for enhanced compatibility.
 (use-package markdown-mode
   :defer t
-  :ensure t
   :mode ("README\\.md\\'" . gfm-mode)            ;; Use gfm-mode for README.md files.
   :init (setq markdown-command "multimarkdown")) ;; Set the Markdown processing command.
 
@@ -621,7 +611,6 @@
 ;; Corfu Mode is highly customizable and can be integrated with
 ;; various modes and languages.
 (use-package corfu
-  :ensure t
   :defer t
   :custom
   (corfu-auto nil)                        ;; Only completes when hitting TAB
@@ -644,7 +633,6 @@
 ;; Provides Nerd Icons to be used with CORFU.
 (use-package nerd-icons-corfu
   :if ek-use-nerd-fonts
-  :ensure t
   :defer t
   :after (:all corfu))
 
@@ -664,7 +652,6 @@
 ;;       Fortunately, `lsp-mode` has a great resource site:
 ;;       https://emacs-lsp.github.io/lsp-mode/
 (use-package lsp-mode
-  :ensure t
   :defer t
   :hook (;; Replace XXX-mode with concrete major mode (e.g. python-mode)
          (lsp-mode . lsp-enable-which-key-integration)  ;; Integrate with Which Key
@@ -721,8 +708,9 @@
   (lsp-headerline-breadcrumb-enable-diagnostics nil)    ;; Disable diagnostics in headerline.
   (lsp-headerline-breadcrumb-icons-enable nil)          ;; Disable icons in breadcrumb.
   ;; Semantic settings
-  (lsp-semantic-tokens-enable nil))                     ;; Disable semantic tokens.
-
+  (lsp-semantic-tokens-enable nil)                     ;; Disable semantic tokens.
+  ;; Language settings
+  (lsp-nix-nil-formatter ["nixfmt"]))
 
 ;;; LSP Additional Servers
 ;; You can extend `lsp-mode' by integrating additional language servers for specific
@@ -731,18 +719,12 @@
 ;; multiple LSP servers simultaneously, enhancing your coding experience across
 ;; different languages and frameworks.
 (use-package lsp-tailwindcss
-  :ensure t
   :defer t
+  :after lsp-mode
   :config
   (add-to-list 'lsp-language-id-configuration '(".*\\.erb$" . "html")) ;; Associate ERB files with HTML.
   :init
   (setq lsp-tailwindcss-add-on-mode t))
-
-(use-package lsp-nix
-  :ensure lsp-mode
-  :after (lsp-mode)
-  :init
-  (setq lsp-nix-nil-formatter ["nixfmt"]))
 
 ;;; ELDOC-BOX
 ;; eldoc-box enhances the default Eldoc experience by displaying documentation in a popup box,
@@ -750,7 +732,6 @@
 ;; the minibuffer. It integrates seamlessly with Eldoc and activates when Eldoc is active.
 ;; Useful for graphical Emacs; terminal users may want to fall back to `eldoc-box-display-at-point-mode'.
 (use-package eldoc-box
-  :ensure t
   :defer t)
 
 
@@ -768,7 +749,6 @@
 ;; a comparable experience in Emacs with its own set of customizations.
 (use-package diff-hl
   :defer t
-  :ensure t
   :hook
   (find-file . (lambda ()
                  (global-diff-hl-mode)           ;; Enable Diff-HL mode for all files.
@@ -803,7 +783,6 @@
 ;; changes in a visual format. Both of these plugins aim to replicate and
 ;; extend the powerful capabilities that Magit offers in Emacs.
 (use-package magit
-  :ensure t
   :config
   ;; Magit in full screen
   (setq magit-display-buffer-function
@@ -820,7 +799,6 @@
 ;; in Emacs can be pasted in other applications, and vice versa, providing a
 ;; smooth workflow when working across multiple environments.
 (use-package xclip
-  :ensure t
   :defer t
   :hook
   (elpaca-after-init . xclip-mode))     ;; Enable xclip mode after initialization.
@@ -834,7 +812,6 @@
 ;; the code.
 (use-package indent-guide
   :defer t
-  :ensure t
   :hook
   (prog-mode . indent-guide-mode)  ;; Activate indent-guide in programming modes.
   :config
@@ -858,7 +835,6 @@
 ;; ensures that the environment is accurate and project-specific tools are
 ;; properly utilized.
 (use-package add-node-modules-path
-  :ensure t
   :defer t
   :custom
   ;; Makes sure you are using the local bin for your
@@ -879,7 +855,6 @@
 ;; operates. This setup configures `evil-mode' to enhance the editing
 ;; experience.
 (use-package evil
-  :ensure t
   :defer t
   :hook
   (elpaca-after-init . evil-mode)
@@ -1083,7 +1058,6 @@
 ;; commands to fit the `evil' style.
 (use-package evil-collection
   :defer t
-  :ensure t
   :custom
   (evil-collection-want-find-usages-bindings t)
   ;; Hook to initialize `evil-collection' when `evil-mode' is activated.
@@ -1104,7 +1078,6 @@
 ;; More examples here:
 ;; - https://github.com/emacs-evil/evil-surround?tab=readme-ov-file#examples
 (use-package evil-surround
-  :ensure t
   :after evil-collection
   :config
   (global-evil-surround-mode 1))
@@ -1117,7 +1090,6 @@
 ;; navigate and manipulate code blocks.
 ;; Just use % for jumping between matching structures to check it out.
 (use-package evil-matchit
-  :ensure t
   :after evil-collection
   :config
   (global-evil-matchit-mode 1))
@@ -1130,7 +1102,6 @@
 ;; changes in your buffers.
 ;; (use-package undo-tree
 ;;   :defer t
-;;   :ensure t
 ;;   :hook
 ;;   (elpaca-after-init . global-undo-tree-mode)
 ;;   :init
@@ -1154,7 +1125,6 @@
 ;; a different color, making it easier to match pairs visually.
 (use-package rainbow-delimiters
   :defer t
-  :ensure t
   :hook
   (prog-mode . rainbow-delimiters-mode))
 
@@ -1163,7 +1133,6 @@
 ;; A simple major mode to provide .env files with color highlighting
 (use-package dotenv-mode
   :defer t
-  :ensure t
   :config)
 
 
@@ -1175,7 +1144,6 @@
 ;; jumping to definitions.
 (use-package pulsar
   :defer t
-  :ensure t
   :hook
   (elpaca-after-init . pulsar-global-mode)
   :config
@@ -1201,7 +1169,6 @@
 ;; and functional. It integrates well with various Emacs features, enhancing the overall user
 ;; experience by displaying relevant information in a compact format.
 (use-package doom-modeline
-  :ensure t
   :defer t
   :custom
   (doom-modeline-buffer-file-name-style 'buffer-name)  ;; Set the buffer file name style to just the buffer name (without path).
@@ -1221,7 +1188,6 @@
 ;; through directories and files. It presents a visual representation of the file system
 ;; and integrates with version control to show file states.
 (use-package neotree
-  :ensure t
   :custom
   (neo-show-hidden-files t)                ;; By default shows hidden files (toggle with H)
   (neo-theme 'nerd)                        ;; Set the default theme for Neotree to 'nerd' for a visually appealing look.
@@ -1239,8 +1205,6 @@
 ;; distinguish between different file types and functionalities.
 (use-package nerd-icons
   :if ek-use-nerd-fonts                   ;; Load the package only if the user has configured to use nerd fonts.
-  :ensure t                               ;; Ensure the package is installed.
-  :straight t
   :defer t)                               ;; Load the package only when needed to improve startup time.
 
 
@@ -1250,7 +1214,6 @@
 ;; interface by making it easier to identify file types at a glance.
 (use-package nerd-icons-dired
   :if ek-use-nerd-fonts                   ;; Load the package only if the user has configured to use nerd fonts.
-  :ensure t                               ;; Ensure the package is installed.
   :defer t                                ;; Load the package only when needed to improve startup time.
   :hook
   (dired-mode . nerd-icons-dired-mode))
@@ -1263,7 +1226,6 @@
 ;; making it easier to distinguish between different types of items.
 (use-package nerd-icons-completion
   :if ek-use-nerd-fonts                   ;; Load the package only if the user has configured to use nerd fonts.
-  :ensure t                               ;; Ensure the package is installed.
   :after (:all nerd-icons marginalia)     ;; Load after `nerd-icons' and `marginalia' to ensure proper integration.
   :config
   (nerd-icons-completion-mode)            ;; Activate nerd icons for completion interfaces.
@@ -1276,7 +1238,6 @@
 ;; This theme aims to create a comfortable and aesthetic coding environment
 ;; with soft colors that are easy on the eyes.
 (use-package catppuccin-theme
-  :ensure t
   :config
   (custom-set-faces
    ;; Set the color for changes in the diff highlighting to blue.
@@ -1297,7 +1258,6 @@
 (use-package denote
   :commands (denote denote-dired)
   :defer t
-  :ensure t
   :hook
   ( ;; Apply colours to Denote names in Dired.  This applies to all
    ;; directories.  Check `denote-dired-directories' for the specific
@@ -1322,7 +1282,6 @@
 
 (use-package denote-journal
   :defer t
-  :ensure t
   :hook (calendar-mode . denote-journal-calendar-mode)
   :config
   ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
@@ -1356,7 +1315,6 @@
 
 ;;; MISE
 (use-package mise
-  :ensure t
   :defer t
   :hook (elpaca-after-init . global-mise-mode))
 
@@ -1380,7 +1338,6 @@
 ;;; Enhancing emacs.kick for my need
 ;;; NIX MODE
 (use-package nix-mode
-  :ensure t
   :defer t
   :mode "\\.nix\\'")
 
@@ -1388,7 +1345,6 @@
 ;; Integrates direnv with Emacs, automatically loading project-specific environment variables from `.envrc`.
 ;; Keeps Emacs' environment in sync with the shell and allows approving `.envrc` files from within Emacs.
 (use-package envrc
-  :ensure t
   :defer t
   :hook (elpaca-after-init . envrc-global-mode))
 
@@ -1419,11 +1375,9 @@
         ("i" . vundo--inspect)
         ("D" . vundo--debug)))
 
-(use-package undo-fu
-  :ensure t)
+(use-package undo-fu)
 
 (use-package undo-fu-session
-  :ensure t
   :after undo-fu
   :custom
   ;; Set the undo session directory relative to the current init directory
