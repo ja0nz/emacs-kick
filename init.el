@@ -430,11 +430,15 @@
 (use-package org
   :ensure nil     ;; This is built-in, no need to fetch it.
   :init
-  (setq org-agenda-files '("~/Documents/denote"))
+  (setq org-agenda-files '("~/Documents/denote/todo.org"))
   :custom
   (org-file-apps
    '((auto-mode . emacs)
      ("\\.pdf\\'" . "xdg-open %s")))
+  (org-habit-show-habits-only-for-today t)
+  (org-habit-graph-column 50)
+  :config
+  (add-to-list 'org-modules 'org-habit t)
   :hook
   (org-mode . visual-line-mode))     ;; Line wrapping for org.
 
@@ -465,6 +469,7 @@
   :ensure nil
   :hook (before-save . whitespace-cleanup))
 
+;; Jinx spell, requires compiles jinx and dictionaries
 (use-package jinx
   :ensure nil
   :hook ((text-mode . jinx-mode)
@@ -637,7 +642,10 @@
 ;;;;;;;; Breadcrumb
 (use-package breadcrumb
   :hook
-  (eglot-connect . breadcrumb-mode))
+  (prog-mode . (lambda ()
+                 (require 'project)
+                 (when (project-current)
+                   (breadcrumb-local-mode 1)))))
 
 ;;;;;;;; Eglot
 (use-package eglot
@@ -652,13 +660,6 @@
   :hook ((prog-mode . (lambda ()
                         (unless (derived-mode-p 'emacs-lisp-mode)
                           (eglot-ensure)))))
-  :config
-  (add-to-list 'eglot-server-programs
-               `(python-mode
-                 . ,(eglot-alternatives '("pylsp"
-                                          ("pyright-langserver" "--stdio")
-                                          "jedi-language-server"
-                                          "pylsp"))))
 
   ;; Aditional:
   ;; gd -> xref-find-definitions
@@ -675,6 +676,16 @@
          ("<leader> l i" . eglot-inlay-hints-mode)
          ("<leader> l f" . eglot-format))
 
+  :config
+  ;; Custom server bundes can be defined like this
+  ;; or prebundeled: https://github.com/joaotavora/rassumfrassum?tab=readme-ov-file#presets
+  ;; (add-to-list 'eglot-server-programs
+  ;;              `(python-mode
+  ;;                . ,(eglot-alternatives '(("pyright-langserver" "--stdio")
+  ;;                                         "jedi-language-server"
+  ;;                                         "pylsp"))))
+
+
   :init
   ;; Special commands flags passed to language servers
   ;; Better: put in .dir-locals.el per project
@@ -683,18 +694,6 @@
 
   ;; Mute Eglot chatter
   (fset #'jsonrpc--log-event #'ignore))
-
-  ;; (with-eval-after-load 'eglot
-  ;;   (add-to-list
-  ;;    'eglot-server-programs
-  ;;    '((tsx-ts-mode typescript-ts-mode js-mode js-jsx-mode js-ts-mode)
-  ;;      . ("rass"
-  ;;         "--"
-  ;;         "typescript-language-server" "--stdio"
-  ;;         "--"
-  ;;         "eslint-lsp" "--stdio"
-  ;;         "--"
-  ;;         "tailwindcss-language-server" "--stdio"))))
 
 ;;; ELDOC-BOX
 ;; eldoc-box enhances the default Eldoc experience by displaying documentation in a popup box,
@@ -1249,7 +1248,9 @@
 
 ;;; MISE
 (use-package mise
-  :hook (elpaca-after-init . global-mise-mode))
+  :demand t
+  :config
+  (global-mise-mode))
 
 ;;; UTILITARY FUNCTION TO INSTALL EMACS-KICK
 (defun ek/first-install ()
