@@ -168,6 +168,7 @@
   (use-short-answers t)                           ;; Use short answers in prompts for quicker responses (y instead of yes)
   (warning-minimum-level :emergency)              ;; Set the minimum level of warnings to display.
   (help-window-select t)                          ;; Non-nil means select help window for viewing.
+  (xref-search-program 'ripgrep)                  ;; Use ripgrep for searching
 
   :hook                                           ;; Add hooks to enable specific features in certain modes.
   (prog-mode . display-line-numbers-mode)         ;; Enable line numbers in programming modes.
@@ -832,7 +833,7 @@
   (evil-define-key 'normal 'global (kbd "<leader> s g") 'consult-grep)
   (evil-define-key 'normal 'global (kbd "<leader> s G") 'consult-git-grep)
   (evil-define-key 'normal 'global (kbd "<leader> s r") 'consult-ripgrep)
-  (evil-define-key 'normal 'global (kbd "<leader> s h") 'consult-info)
+  (evil-define-key 'normal 'global (kbd "<leader> s h") 'consult-org-heading)
   (evil-define-key 'normal 'global (kbd "<leader> /") 'consult-line)
   (evil-define-key 'normal 'global (kbd "<leader> s o") 'consult-outline)
   (evil-define-key 'normal 'global (kbd "<leader> s i") 'consult-imenu)
@@ -846,10 +847,6 @@
   ;; Diff-HL navigation for version control
   (evil-define-key 'normal 'global (kbd "] c") 'diff-hl-next-hunk) ;; Next diff hunk
   (evil-define-key 'normal 'global (kbd "[ c") 'diff-hl-previous-hunk) ;; Previous diff hunk
-
-  ;; NeoTree command for file exploration
-  (evil-define-key 'normal 'global (kbd "<leader> e e") 'neotree-toggle)
-  (evil-define-key 'normal 'global (kbd "<leader> e d") 'dired-jump)
 
   ;; Magit keybindings for Git integration
   (evil-define-key 'normal 'global (kbd "<leader> g g") 'magit-status)      ;; Open Magit status
@@ -878,7 +875,13 @@
   (evil-define-key 'normal 'global (kbd "<leader> f f") 'find-file)
   (evil-define-key 'normal 'global (kbd "<leader> f r") 'consult-recent-file)
 
-  ;; Buffer management keybindings
+  ;; [O] Open stuff
+  (evil-define-key 'normal 'global (kbd "<leader> o a") 'org-agenda)
+  (evil-define-key 'normal 'global (kbd "<leader> o t") 'eat-project)
+  (evil-define-key 'normal 'global (kbd "<leader> o n") 'neotree-toggle)
+  (evil-define-key 'normal 'global (kbd "<leader> o d") 'dired-jump)
+
+  ;; [B] Buffer management keybindings
   (evil-define-key 'normal 'global (kbd "] b") 'switch-to-next-buffer) ;; Switch to next buffer
   (evil-define-key 'normal 'global (kbd "[ b") 'switch-to-prev-buffer) ;; Switch to previous buffer
   (evil-define-key 'normal 'global (kbd "<leader> b i") 'consult-buffer) ;; Open consult buffer list
