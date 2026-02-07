@@ -153,7 +153,6 @@
   (indent-tabs-mode nil)                          ;; Disable the use of tabs for indentation (use spaces instead).
   (inhibit-startup-message t)                     ;; Disable the startup message when Emacs launches.
   (initial-scratch-message "")                    ;; Clear the initial message in the *scratch* buffer.
-  (ispell-dictionary "en_US")                     ;; Set the default dictionary for spell checking.
   (make-backup-files nil)                         ;; Disable creation of backup files.
   (pixel-scroll-precision-mode t)                 ;; Enable precise pixel scrolling.
   (pixel-scroll-precision-use-momentum nil)       ;; Disable momentum scrolling for pixel precision.
@@ -465,6 +464,18 @@
 (use-package whitespace
   :ensure nil
   :hook (before-save . whitespace-cleanup))
+
+(use-package jinx
+  :ensure nil
+  :hook ((text-mode . jinx-mode)
+         (prog-mode . jinx-mode))
+  :custom
+  (jinx-languages "en_US de_DE")
+  (jinx-camel-modes '(prog-mode))
+  (jinx-delay 0.1)
+  :bind (("C-;" . jinx-correct)
+         :map evil-normal-state-map
+         ("z =" . jinx-correct)))
 
 ;;; ==================== EXTERNAL PACKAGES ====================
 ;;
