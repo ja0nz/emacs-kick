@@ -233,7 +233,7 @@
 ;;    Packages     : %s
 "
                          (emacs-init-time)
-                         (length elpaca-repos-directory)))))))
+                         (alist-get 'finished elpaca--status-counts)))))))
 
 
 ;;; WINDOW
@@ -430,15 +430,17 @@
 (use-package org
   :ensure nil     ;; This is built-in, no need to fetch it.
   :init
-  (setq org-agenda-files '("~/Documents/denote/todo.org"))
+  (setq org-agenda-files '("~/Documents/org/agenda.org"))
   :custom
   (org-file-apps
    '((auto-mode . emacs)
      ("\\.pdf\\'" . "xdg-open %s")))
   (org-habit-show-habits-only-for-today t)
   (org-habit-graph-column 50)
+  (org-tags-column 0)
   :config
   (add-to-list 'org-modules 'org-habit t)
+  (require 'org-tempo)
   :hook
   (org-mode . visual-line-mode))     ;; Line wrapping for org.
 
@@ -480,7 +482,31 @@
   (jinx-delay 0.1)
   :bind (("C-;" . jinx-correct)
          :map evil-normal-state-map
-         ("z =" . jinx-correct)))
+         ("z =" . jinx-correct)
+         ("[ s" . jinx-previous)
+         ("] s" . jinx-next)))
+
+;; Merging winner and tab-bar
+(use-package tab-bar
+  :ensure nil
+  :init
+  (tab-bar-history-mode 1)
+  :bind (([remap winner-undo] . tab-or-winner-undo)
+         ([remap winner-redo] . tab-or-winner-redo))
+  :config
+  (defun tab-or-winner-undo ()
+    (interactive)
+    ;; Using (tab-bar-history-oldest-p) or checking the stack
+    (if (and tab-bar-history-mode (gethash (selected-frame) tab-bar-history-back))
+        (tab-bar-history-back)
+      (winner-undo)))
+
+  (defun tab-or-winner-redo ()
+    (interactive)
+    (if (and tab-bar-history-mode (gethash (selected-frame) tab-bar-history-forward))
+        (tab-bar-history-forward)
+      (winner-redo))))
+
 
 ;;; ==================== EXTERNAL PACKAGES ====================
 ;;
@@ -838,7 +864,7 @@
   (evil-set-leader 'normal (kbd "SPC"))
   (evil-set-leader 'visual (kbd "SPC"))
 
-  ;; Keybindings for searching and finding files.
+  ;; [S] Keybindings for searching and finding files.
   (evil-define-key 'normal 'global (kbd "<leader> s f") 'consult-fd)
   (evil-define-key 'normal 'global (kbd "<leader> s g") 'consult-grep)
   (evil-define-key 'normal 'global (kbd "<leader> s G") 'consult-git-grep)
@@ -858,7 +884,7 @@
   (evil-define-key 'normal 'global (kbd "] c") 'diff-hl-next-hunk) ;; Next diff hunk
   (evil-define-key 'normal 'global (kbd "[ c") 'diff-hl-previous-hunk) ;; Previous diff hunk
 
-  ;; Magit keybindings for Git integration
+  ;; [G] Magit keybindings for Git integration
   (evil-define-key 'normal 'global (kbd "<leader> g g") 'magit-status)      ;; Open Magit status
   (evil-define-key 'normal 'global (kbd "<leader> g l") 'magit-log-current) ;; Show current log
   (evil-define-key 'normal 'global (kbd "<leader> g d") 'magit-diff-buffer-file) ;; Show diff for the current file
@@ -968,11 +994,11 @@
 
 
   ;; Custom example. Formatting with prettier tool.
-  (evil-define-key 'normal 'global (kbd "<leader> m p")
-    (lambda ()
-      (interactive)
-      (shell-command (concat "prettier --write " (shell-quote-argument (buffer-file-name))))
-      (revert-buffer t t t)))
+  ;; (evil-define-key 'normal 'global (kbd "<leader> m p")
+  ;;   (lambda ()
+  ;;     (interactive)
+  ;;     (shell-command (concat "prettier --write " (shell-quote-argument (buffer-file-name))))
+  ;;     (revert-buffer t t t)))
 
   (evil-define-key 'normal 'global (kbd "K") #'eldoc-box-help-at-point)
 
@@ -1246,11 +1272,6 @@
   :custom
   (eat-kill-buffer-on-exit t))
 
-;;; MISE
-(use-package mise
-  :demand t
-  :config
-  (global-mise-mode))
 
 ;;; UTILITARY FUNCTION TO INSTALL EMACS-KICK
 (defun ek/first-install ()
@@ -1279,6 +1300,12 @@
 ;; Keeps Emacs' environment in sync with the shell and allows approving `.envrc` files from within Emacs.
 (use-package envrc
   :hook (elpaca-after-init . envrc-global-mode))
+
+;;; ...and MISE, which is like ENVRC but i like it even better
+(use-package mise
+  :demand t
+  :config
+  (global-mise-mode))
 
 ;;; VUNDO
 ;; Provides a visual, interactive undo tree in Emacs, letting you browse and selectively undo or redo changes
