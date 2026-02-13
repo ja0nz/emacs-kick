@@ -453,7 +453,6 @@
   :hook
   (org-mode . org-modern-mode))
 
-
 ;;; WHICH-KEY
 ;; `which-key' is an Emacs package that displays available keybindings in a
 ;; popup window whenever you partially type a key sequence. This is particularly
@@ -941,29 +940,10 @@
       (define-key evil-visual-state-map (kbd "<leader> p") cxp-map)))
    (evil-define-key 'normal 'global (kbd "<leader> p b") 'consult-project-buffer) ;; Consult project buffer
 
-  ;; [D] Notes/Journal by Denote
-  (evil-define-key 'normal 'global (kbd "<leader> n n") 'denote) ;; New note
-  (evil-define-key 'normal 'global (kbd "<leader> n d") 'denote-dired) ;; Open dired
-  (evil-define-key 'normal 'global (kbd "<leader> n g") 'denote-grep) ;; Search in note
-  (evil-define-key 'normal 'global (kbd "<leader> n l") 'denote-link) ;; Create link to FILE note in variable ‘denote-directory’ with DESCRIPTION
-  (evil-define-key 'normal 'global (kbd "<leader> n L") 'denote-add-links) ;; Insert links to all files whose file names match REGEXP.
-  (evil-define-key 'normal 'global (kbd "<leader> n b") 'denote-backlinks) ;;Produce a buffer with backlinks to the current note.
-  (evil-define-key 'normal 'global (kbd "<leader> n q c") 'denote-query-contents-link) ;; Insert query link for file contents.
-  (evil-define-key 'normal 'global (kbd "<leader> n q f") 'denote-query-filenames-link) ;; Insert query link for file names.
-  (evil-define-key 'normal 'global (kbd "<leader> n r") 'denote-rename-file) ;; Rename file and update existing front matter if appropriate.
-  (evil-define-key 'normal 'global (kbd "<leader> n R") 'denote-rename-file-using-front-matter) ;; Rename FILE using its front matter as input.
-
-  ;; Denote journal
-  (evil-define-key 'normal 'global (kbd "<leader> n j") 'denote-journal-new-or-existing-entry) ;; New journal entry
-  (evil-define-key 'normal 'global (kbd "<leader> n J") 'denote-journal-link-or-create-entry) ;; Link to journal entry
-
-  ;; Denote dired
-  (with-eval-after-load 'dired
-    (evil-define-key 'normal dired-mode-map
-      (kbd "<leader> n i") 'denote-dired-link-marked-notes ;; Insert Dired marked FILES as links in BUFFER
-      (kbd "<leader> n k") 'denote-dired-rename-files ;; Rename Dired marked files like denote-rename-file
-      (kbd "<leader> n r") 'denote-dired-rename-marked-files-with-keywords ;; Rename a Dired marked file to a Denote file
-      (kbd "<leader> n R") 'denote-dired-rename-marked-files-using-front-matter)) ;; Rename FILE using its front matter as input.
+  ;; [N] Notes by org-quote
+  (evil-define-key 'normal 'global (kbd "<leader> n") org-node-global-prefix-map)
+  (with-eval-after-load 'org
+    (evil-define-key 'normal org-mode-map (kbd "<leader> n") org-node-org-prefix-map))
 
   ;; [J] Jump around
   (evil-define-key 'normal 'global (kbd "<leader> j j") 'casual-avy-tmenu)     ;; Avy menu
@@ -1216,44 +1196,24 @@
   ;; Load the Catppuccin theme without prompting for confirmation.
   (load-theme 'catppuccin :no-confirm))
 
-;;; DENOTE
-(use-package denote
-  :commands (denote denote-dired)
-  :hook
-  ( ;; Apply colours to Denote names in Dired.  This applies to all
-   ;; directories.  Check `denote-dired-directories' for the specific
-   ;; directories you may prefer instead.  Then, instead of
-   ;; `denote-dired-mode', use `denote-dired-mode-in-directories'.
-   (dired-mode . denote-dired-mode))
+(use-package org-mem
+  :commands (org-mem-updater-mode)
+  :hook (org-mode . org-mem-updater-mode)
   :config
-  (setq denote-directory (expand-file-name "~/Documents/denote/"))
-  (setq denote-save-buffers nil) ;; Control whether to save buffers automatically
-  (setq denote-infer-keywords t) ;; Whether to infer keywords form existing note files
-  (setq denote-sort-keywords t)  ;; Whether to sort keywords in new files
-  (setq denote-prompts '(title keywords))
-  (setq denote-excluded-directories-regexp nil)
-  (setq denote-excluded-keywords-regexp nil)
-  (setq denote-rename-confirmations '(rewrite-front-matter modify-file-name))
+  (setq org-mem-do-sync-with-org-id t)
+  (setq org-mem-watch-dirs
+        (list "~/Documents/org"))
+  (org-mem-updater-mode))
 
-  ;; Pick dates, where relevant, with Org's advanced interface:
-  (setq denote-date-prompt-use-org-read-date t)
-
-  ;; Automatically rename Denote buffers using the `denote-rename-buffer-format'.
-  (denote-rename-buffer-mode 1))
-
-(use-package denote-journal
-  :hook (calendar-mode . denote-journal-calendar-mode)
+(use-package org-node
+  :custom
+  (org-node-affixation-fn #'org-node-prepend-tags-and-olp)
   :config
-  ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
-  ;; to nil to use the `denote-directory' instead.
-  (setq denote-journal-directory
-        (expand-file-name "journal" denote-directory))
-  ;; Default keyword for new journal entries. It can also be a list of
-  ;; strings.
-  (setq denote-journal-keyword "journal")
-  ;; Read the doc string of `denote-journal-title-format'.
-  (setq denote-journal-title-format 'day-date-month-year))
+  (org-node-cache-mode))
 
+(use-package org-transclusion
+  :after org
+  :commands (org-transclusion-add org-transclusion-mode))
 
 ;; Origami text folding
 (use-package origami
