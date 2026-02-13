@@ -1259,7 +1259,7 @@
 ;; Integrates direnv with Emacs, automatically loading project-specific environment variables from `.envrc`.
 ;; Keeps Emacs' environment in sync with the shell and allows approving `.envrc` files from within Emacs.
 (use-package envrc
-  :hook (elpaca-after-init . envrc-global-mode))
+  :config (envrc-global-mode))
 
 ;;; ...and MISE, which is like ENVRC but i like it even better
 (use-package mise
