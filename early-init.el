@@ -10,6 +10,20 @@
 ;; Set the maximum output size for reading process output, allowing for larger data transfers.
 (setq read-process-output-max (* 1024 1024 4))
 
+;; Disable JIT native compilation during normal usage.
+;; All native compilation is handled upfront during installation
+;; (e.g., via `ek-reinstall.sh' or `ek/first-install').
+;; This prevents Emacs from compiling packages in the background
+;; while you're working, which can cause occasional stutters.
+(setq native-comp-jit-compilation nil)
+;; If you find Emacs slow for your usage, JIT native compilation increases
+;; performance dramatically.  Its default behavior, however, can be confusing
+;; for newcomers since it compiles things in the background unpredictably.
+;; To enable it, change the value above to `t'.  After that, every time you
+;; first use a feature, JIT will compile it in the background, so expect
+;; things to be sluggish for a bit.  Once everything is compiled, it's
+;; speed all the way.
+
 ;; Do I really need a speedy startup?
 ;; Well, this config launches Emacs in about ~0.3 seconds,
 ;; which, in modern terms, is a miracle considering how fast it starts

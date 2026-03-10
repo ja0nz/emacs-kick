@@ -137,12 +137,12 @@ configuration.
 grammars and download some fonts. This configuration uses **Nerd Fonts** by
 default, so installing them now is highly recommended for the best experience.
 
-**VERY IMPORTANT**: On first launch, Emacs will also **native compile some
-external packages**, which may take a little time. Additionally, the first time
-you perform certain actions, like opening the tree explorer, Emacs may compile
-related components in the background. This is completely normal and only
-happens once per feature. You might notice a brief moment of sluggish
-performance during this initial compilation.
+**VERY IMPORTANT**: On first launch, Emacs will **byte-compile** some external
+packages, which may take a little time. This is completely normal and only
+happens once. Subsequent launches will be fast. Note that JIT native compilation
+is disabled by default in this config to avoid confusing background compilation.
+If you want extra performance, see the comments around `native-comp-jit-compilation`
+in `init.el` on how to enable it.
 
 3. **Set terminal mode by default**:
 
