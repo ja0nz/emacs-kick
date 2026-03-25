@@ -90,7 +90,7 @@
   ;;(setq use-package-always-defer t)
   (elpaca-use-package-mode))
 
-(setq elpaca-lock-file (concat user-emacs-directory "elpaca.lock"))
+;; (setq elpaca-lock-file (concat user-emacs-directory "elpaca.lock"))
 
 (provide 'early-init)
 ;;; early-init.el ends here

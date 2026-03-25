@@ -82,7 +82,7 @@
 ;; different constructs in your Emacs config.
 ;;
 ;; If you encounter any errors while installing Emacs-Kick,
-;; check the *Messages* buffer for more information.  You can switch
+;; check the *Messages* buffer for more information. You can switch
 ;; buffers using `<leader> SPC`, and all option menus can be navigated
 ;; with `C-p` and `C-n`.
 ;;
@@ -156,6 +156,7 @@
   (make-backup-files nil)                         ;; Disable creation of backup files.
   (pixel-scroll-precision-mode t)                 ;; Enable precise pixel scrolling.
   (pixel-scroll-precision-use-momentum nil)       ;; Disable momentum scrolling for pixel precision.
+  (scroll-conservatively 10)                      ;; Disable 'paging' effect when scrolling
   (ring-bell-function 'ignore)                    ;; Disable the audible bell.
   (split-width-threshold 300)                     ;; Prevent automatic window splitting if the window width exceeds 300 pixels.
   (switch-to-buffer-obey-display-actions t)       ;; Make buffer switching respect display actions.
@@ -438,9 +439,21 @@
   (org-habit-show-habits-only-for-today t)
   (org-habit-graph-column 50)
   (org-tags-column 0)
+  (org-global-properties
+   '(("Effort_ALL" . "0:05 0:10 0:25 0:50 1:15 1:40 2:05 2:55 3:45 4:35 5:25 6:15 7:05")))
   :config
+  ;; Load habits module
   (add-to-list 'org-modules 'org-habit t)
-  (require 'org-tempo)
+  (org-load-modules-maybe t) ; Ensures the module actually loads
+
+  (require 'org-tempo) ; For shortcuts like <s TAB
+
+  (setq org-refile-targets
+        '((nil :maxlevel . 1)
+          (org-agenda-files :maxlevel . 1)))
+
+  (setq org-todo-keywords
+        '((sequence "TODO(t)" "NEXT(n)" "HOLD(h)" "|" "DONE(d)" "CANCELED(c)")))
   :hook
   (org-mode . visual-line-mode))     ;; Line wrapping for org.
 
@@ -452,6 +465,11 @@
   (org-modern-hide-stars ".")
   :hook
   (org-mode . org-modern-mode))
+
+(use-package org-super-agenda
+  :after org
+  :config
+  (org-super-agenda-mode))
 
 ;;; WHICH-KEY
 ;; `which-key' is an Emacs package that displays available keybindings in a
@@ -470,20 +488,6 @@
   :ensure nil
   :hook (before-save . whitespace-cleanup))
 
-;; Jinx spell, requires compiles jinx and dictionaries
-(use-package jinx
-  :ensure nil
-  :hook ((text-mode . jinx-mode)
-         (prog-mode . jinx-mode))
-  :custom
-  (jinx-languages "en_US de_DE")
-  (jinx-camel-modes '(prog-mode))
-  (jinx-delay 0.1)
-  :bind (("C-;" . jinx-correct)
-         :map evil-normal-state-map
-         ("z =" . jinx-correct)
-         ("[ s" . jinx-previous)
-         ("] s" . jinx-next)))
 
 ;; Merging winner and tab-bar
 (use-package tab-bar
@@ -512,6 +516,21 @@
 ;; From this point onward, all configurations will be for third-party packages
 ;; that enhance Emacs' functionality and extend its capabilities.
 
+;; Jinx spell, requires compiles jinx and dictionaries
+(use-package jinx
+  :after evil
+  :hook ((text-mode . jinx-mode)
+         (prog-mode . jinx-mode))
+  :custom
+  (jinx-languages "en_US de_DE")
+  (jinx-camel-modes '(prog-mode))
+  (jinx-delay 0.1)
+  :bind (("C-;" . jinx-correct)
+         :map evil-normal-state-map
+         ("z =" . jinx-correct)
+         ("[ s" . jinx-previous)
+         ("] s" . jinx-next)))
+
 ;;; VERTICO
 ;; Vertico enhances the completion experience in Emacs by providing a
 ;; vertical selection interface for both buffer and minibuffer completions.
@@ -534,7 +553,36 @@
   (vertico-count 10)                    ;; Number of candidates to display in the completion list.
   (vertico-resize nil)                  ;; Disable resizing of the vertico minibuffer.
   (vertico-cycle nil)                   ;; Do not cycle through candidates when reaching the end of the list.
+  :bind (:map
+         vertico-map
+         ("C-l" . +vertico/enter-or-preview))
   :config
+  (defun +vertico/embark-preview ()
+    "Previews candidate in vertico buffer, unless it's a consult command"
+    (interactive)
+    (unless (bound-and-true-p consult--preview-function)
+      (if (fboundp 'embark-dwim)
+          (save-selected-window
+            (let (embark-quit-after-action)
+              (embark-dwim)))
+        (user-error "Embark not installed, aborting..."))))
+
+  ;;;###autoload
+  (defun +vertico/enter-or-preview ()
+    "Enter directory or embark preview on current candidate."
+    (interactive)
+    (when (> 0 vertico--index)
+      (user-error "No vertico session is currently active"))
+    (if (and (let ((cand (vertico--candidate)))
+               (or (string-suffix-p "/" cand)
+                   (and (vertico--remote-p cand)
+                        (string-suffix-p ":" cand))))
+             (not (equal vertico--base ""))
+             (eq 'file (vertico--metadata-get 'category)))
+        (vertico-insert)
+      (condition-case _
+          (+vertico/embark-preview)
+        (user-error (vertico-directory-enter)))))
   ;; Customize the display of the current candidate in the completion list.
   ;; This will prefix the current candidate with “» ” to make it stand out.
   ;; Reference: https://github.com/minad/vertico/wiki#prefix-current-candidate-with-arrow
@@ -627,6 +675,7 @@
 ;; It’s particularly useful for README files, as it can be set
 ;; to use GitHub Flavored Markdown for enhanced compatibility.
 (use-package markdown-mode
+  :defer t
   :mode ("README\\.md\\'" . gfm-mode)            ;; Use gfm-mode for README.md files.
   :init (setq markdown-command "multimarkdown")) ;; Set the Markdown processing command.
 
@@ -655,13 +704,29 @@
   (global-corfu-mode)
   (corfu-popupinfo-mode t))
 
-
 ;;; NERD-ICONS-CORFU
 ;; Provides Nerd Icons to be used with CORFU.
 (use-package nerd-icons-corfu
   :if ek-use-nerd-fonts
   :defer t
   :after (:all corfu))
+
+;; CAPE
+(use-package cape
+  ;; Press C-c p ? to for help.
+  :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
+  :init
+  (add-hook 'completion-at-point-functions #'cape-file)
+  (add-hook 'completion-at-point-functions #'cape-dabbrev)
+
+  (defun my/eglot-capfs ()
+    (setq-local completion-at-point-functions
+                (list (cape-capf-super
+                       #'eglot-completion-at-point
+                       #'cape-dabbrev
+                       #'cape-keyword))))
+  (add-hook 'eglot-managed-mode-hook #'my/eglot-capfs)
+)
 
 ;;;;;; EGLOT Family
 ;;;;;;;; Breadcrumb
@@ -852,9 +917,8 @@
   (setq evil-want-keybinding nil)     ;; Disable default keybinding to set custom ones.
   (setq evil-want-C-u-scroll t)       ;; Makes C-u scroll
   (setq evil-want-C-u-delete t)       ;; Makes C-u delete on insert mode
+  (setq evil-set-undo-system 'undo-fu)
   :config
-  (evil-set-undo-system 'undo-fu)   ;; Uses the default undo system
-
   ;; Set the leader key to space for easier access to custom commands. (setq evil-want-leader t)
   (setq evil-leader/in-all-states t)  ;; Make the leader key available in all states.
   (setq evil-want-fine-undo t)        ;; Evil uses finer grain undoing steps
@@ -1206,6 +1270,7 @@
   (org-mem-updater-mode))
 
 (use-package org-node
+  :defer t
   :custom
   (org-node-affixation-fn #'org-node-prepend-tags-and-olp)
   :config
@@ -1213,6 +1278,8 @@
 
 (use-package org-transclusion
   :after org
+  :config
+  (define-key org-node-org-prefix-map (kbd "t") org-transclusion-map)
   :commands (org-transclusion-add org-transclusion-mode))
 
 ;; Origami text folding
@@ -1221,6 +1288,7 @@
   :hook (prog-mode . origami-mode))
 
 (use-package eat
+  :defer t
   :ensure (:type git
              :host codeberg
              :repo "akib/emacs-eat"
@@ -1259,13 +1327,14 @@
 ;; Integrates direnv with Emacs, automatically loading project-specific environment variables from `.envrc`.
 ;; Keeps Emacs' environment in sync with the shell and allows approving `.envrc` files from within Emacs.
 (use-package envrc
+  :defer t
   :config (envrc-global-mode))
 
 ;;; ...and MISE, which is like ENVRC but i like it even better
+;;; Bug [13.02.2026] - does not automatically load environment
+;;; Need to run `mode-mode' manually and start `eglot' after
 (use-package mise
-  :demand t
-  :config
-  (global-mise-mode))
+  :defer t)
 
 ;;; VUNDO
 ;; Provides a visual, interactive undo tree in Emacs, letting you browse and selectively undo or redo changes
