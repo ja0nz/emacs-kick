@@ -429,47 +429,73 @@
 ;; productivity. The configuration below simply defers loading Org-mode until
 ;; it's explicitly needed, which can help speed up Emacs startup time.
 (use-package org
-  :ensure nil     ;; This is built-in, no need to fetch it.
+  :ensure nil
   :init
-  (setq org-agenda-files '("~/Documents/org/agenda.org"))
+  (setq org-directory "~/Documents/org")
+  (setq org-archive-location (expand-file-name "archive.org::" org-directory))
   :custom
   (org-file-apps
    '((auto-mode . emacs)
      ("\\.pdf\\'" . "xdg-open %s")))
   (org-habit-show-habits-only-for-today t)
-  (org-habit-graph-column 50)
-  (org-tags-column 0)
   (org-global-properties
    '(("Effort_ALL" . "0:05 0:10 0:25 0:50 1:15 1:40 2:05 2:55 3:45 4:35 5:25 6:15 7:05")))
+  (org-agenda-window-setup 'only-window)
+  (org-agenda-skip-deadline-prewarning-if-scheduled t)
+  (org-agenda-remove-tags t)
+  (org-agenda-prefix-format
+   '((agenda . " %i %-12:c%?-12t%?-12s%-6e%(my/agenda-prefix-with-tags) ")
+     (todo   . " %i %-12:c")
+     (tags   . " %i %-12:c")
+     (search . " %i %-12:c")))
+  (org-columns-default-format
+   "%40ITEM %TODO %Effort{:} %CLOCKSUM %TAGS")
   :config
-  ;; Load habits module
-  (add-to-list 'org-modules 'org-habit t)
-  (org-load-modules-maybe t) ; Ensures the module actually loads
-
-  (require 'org-tempo) ; For shortcuts like <s TAB
-
+  (add-to-list 'org-modules 'org-habit)
+  (org-load-modules-maybe t)
+  (require 'org-tempo)
+  (defun my/agenda-prefix-with-tags ()
+    (let* ((tags (org-get-tags nil nil))
+           (habit (string= (org-entry-get nil "STYLE") "habit"))
+           (tag-str (if (and tags (not habit))
+                        (format "|%-20s|" (concat ":" (string-join tags ":") ":"))
+                      "")))
+      tag-str))
   (setq org-refile-targets
         '((nil :maxlevel . 1)
+          (org-buffer-list :maxlevel . 1)
           (org-agenda-files :maxlevel . 1)))
-
   (setq org-todo-keywords
-        '((sequence "TODO(t)" "NEXT(n)" "HOLD(h)" "|" "DONE(d)" "CANCELED(c)")))
+        '((sequence "TODO(t)" "NEXT(n)" "HOLD(h)" "WAITING(w)" "|" "DONE(d)" "CANCELED(c)")))
+  (custom-set-faces
+   '(org-agenda-clocking ((t (:background "#3d4f2e" :weight bold)))))
+  (with-eval-after-load 'org-agenda
+    (define-key org-agenda-mode-map "s" #'org-agenda-schedule))
+  (setq org-M-RET-may-split-line '((default . nil)))
+  (setq org-insert-heading-respect-content t)
+  (setq org-log-done 'time)
+  (setq org-log-into-drawer t)
   :hook
-  (org-mode . visual-line-mode))     ;; Line wrapping for org.
+  (org-mode . (lambda () (setq tab-width 8)))
+  (org-mode . visual-line-mode))
 
-;;; External package but related to org
+(use-package org-window-habit
+  :after org
+  :config
+  (setq org-window-habit-completion-needed-today-glyph ?-)
+  (setq org-window-habit-completed-glyph ?+)
+  (setq org-window-habit-repeat-to-deadline nil)
+  (setq org-window-habit-repeat-to-scheduled t)
+  (org-window-habit-mode +1))
+
 (use-package org-modern
   :after org
   :custom
   (org-modern-star 'replace)
   (org-modern-hide-stars ".")
   :hook
-  (org-mode . org-modern-mode))
-
-(use-package org-super-agenda
-  :after org
-  :config
-  (org-super-agenda-mode))
+  (org-mode . org-modern-mode)
+  (org-agenda-finalize . org-modern-agenda))
 
 ;;; WHICH-KEY
 ;; `which-key' is an Emacs package that displays available keybindings in a
@@ -515,6 +541,11 @@
 ;;
 ;; From this point onward, all configurations will be for third-party packages
 ;; that enhance Emacs' functionality and extend its capabilities.
+
+
+;; Transient
+;; [30.03.2026] Suddenly a dependency by magit
+(use-package transient)
 
 ;; Jinx spell, requires compiles jinx and dictionaries
 (use-package jinx
@@ -713,19 +744,24 @@
 
 ;; CAPE
 (use-package cape
+  ;; Bind prefix keymap providing all Cape commands under a mnemonic key.
   ;; Press C-c p ? to for help.
   :bind ("C-c p" . cape-prefix-map) ;; Alternative key: M-<tab>, M-p, M-+
+  ;; Alternatively bind Cape commands individually.
+  ;; :bind (("C-c p d" . cape-dabbrev)
+  ;;        ("C-c p h" . cape-history)
+  ;;        ("C-c p f" . cape-file)
+  ;;        ...)
   :init
-  (add-hook 'completion-at-point-functions #'cape-file)
+  ;; Add to the global default value of `completion-at-point-functions' which is
+  ;; used by `completion-at-point'.  The order of the functions matters, the
+  ;; first function returning a result wins.  Note that the list of buffer-local
+  ;; completion functions takes precedence over the global list.
   (add-hook 'completion-at-point-functions #'cape-dabbrev)
-
-  (defun my/eglot-capfs ()
-    (setq-local completion-at-point-functions
-                (list (cape-capf-super
-                       #'eglot-completion-at-point
-                       #'cape-dabbrev
-                       #'cape-keyword))))
-  (add-hook 'eglot-managed-mode-hook #'my/eglot-capfs)
+  (add-hook 'completion-at-point-functions #'cape-file)
+  (add-hook 'completion-at-point-functions #'cape-elisp-block)
+  ;; (add-hook 'completion-at-point-functions #'cape-history)
+  ;; ...
 )
 
 ;;;;;; EGLOT Family
@@ -926,6 +962,8 @@
   ;; Define the leader key as Space
   (evil-set-leader 'normal (kbd "SPC"))
   (evil-set-leader 'visual (kbd "SPC"))
+  ;; Remap C-u -> C-c u
+  (global-set-key (kbd "C-c u") #'universal-argument)
 
   ;; [S] Keybindings for searching and finding files.
   (evil-define-key 'normal 'global (kbd "<leader> s f") 'consult-fd)
@@ -1261,13 +1299,26 @@
   (load-theme 'catppuccin :no-confirm))
 
 (use-package org-mem
-  :commands (org-mem-updater-mode)
-  :hook (org-mode . org-mem-updater-mode)
+  :defer t
+  :init
+  (advice-add 'org-agenda :before (lambda (&rest _) (require 'org-mem)))
   :config
   (setq org-mem-do-sync-with-org-id t)
-  (setq org-mem-watch-dirs
-        (list "~/Documents/org"))
-  (org-mem-updater-mode))
+  (setq org-mem-watch-dirs (list org-directory))
+  (defun my-set-agenda-files (&rest _)
+    (setq org-agenda-files
+          (cl-loop for file in (org-mem-all-files)
+                   unless (string-search "archive" file)
+                   as entries = (org-mem-entries-in-file file)
+                   when (seq-find (##or (org-mem-entry-active-timestamps %)
+                                        (org-mem-entry-todo-state %)
+                                        (org-mem-entry-scheduled %)
+                                        (org-mem-entry-deadline %))
+                                  entries)
+                   collect file)))
+  (add-hook 'org-mem-post-full-scan-functions #'my-set-agenda-files)
+  (org-mem-updater-mode)
+  (org-mem-await "Initializing org-mem index..." 5))
 
 (use-package org-node
   :defer t
@@ -1275,12 +1326,6 @@
   (org-node-affixation-fn #'org-node-prepend-tags-and-olp)
   :config
   (org-node-cache-mode))
-
-(use-package org-transclusion
-  :after org
-  :config
-  (define-key org-node-org-prefix-map (kbd "t") org-transclusion-map)
-  :commands (org-transclusion-add org-transclusion-mode))
 
 ;; Origami text folding
 (use-package origami
@@ -1327,14 +1372,17 @@
 ;; Integrates direnv with Emacs, automatically loading project-specific environment variables from `.envrc`.
 ;; Keeps Emacs' environment in sync with the shell and allows approving `.envrc` files from within Emacs.
 (use-package envrc
-  :defer t
   :config (envrc-global-mode))
 
 ;;; ...and MISE, which is like ENVRC but i like it even better
 ;;; Bug [13.02.2026] - does not automatically load environment
-;;; Need to run `mode-mode' manually and start `eglot' after
-(use-package mise
-  :defer t)
+;;; Need to run `mise-mode' manually and start `eglot' after
+;; (use-package mise
+;;   :defer t)
+
+;;  Kitty Keyboard protocol
+(use-package kkp
+  :hook (tty-setup . global-kkp-mode))
 
 ;;; VUNDO
 ;; Provides a visual, interactive undo tree in Emacs, letting you browse and selectively undo or redo changes
