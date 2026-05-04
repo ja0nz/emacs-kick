@@ -438,6 +438,7 @@
    '((auto-mode . emacs)
      ("\\.pdf\\'" . "xdg-open %s")))
   (org-habit-show-habits-only-for-today t)
+  (org-tags-column 50)
   (org-global-properties
    '(("Effort_ALL" . "0:05 0:10 0:25 0:50 1:15 1:40 2:05 2:55 3:45 4:35 5:25 6:15 7:05")))
   (org-agenda-window-setup 'only-window)
@@ -542,10 +543,14 @@
 ;; From this point onward, all configurations will be for third-party packages
 ;; that enhance Emacs' functionality and extend its capabilities.
 
+(use-package typst-ts-mode
+  :ensure (:host codeberg :repo "meow_king/typst-ts-mode")
+  :mode "\\.typ\\'")
 
 ;; Transient
 ;; [30.03.2026] Suddenly a dependency by magit
-(use-package transient)
+(use-package transient
+  :defer t)
 
 ;; Jinx spell, requires compiles jinx and dictionaries
 (use-package jinx
@@ -696,8 +701,16 @@
   :custom
   (treesit-auto-install 'prompt)
   :config
+  (let ((typst-recipe (make-treesit-auto-recipe
+                       :lang 'typst
+                       :ts-mode 'typst-ts-mode
+                       :remap 'typst-mode
+                       :url "https://github.com/uben0/tree-sitter-typst"
+                       :revision "master"
+                       :source-dir "src")))
+    (add-to-list 'treesit-auto-recipe-list typst-recipe))
   (treesit-auto-add-to-auto-mode-alist 'all)
-  (global-treesit-auto-mode t))
+  (global-treesit-auto-mode 1))
 
 
 ;;; MARKDOWN-MODE
@@ -731,9 +744,9 @@
   :config
   (if ek-use-nerd-fonts
       (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
-  :init
-  (global-corfu-mode)
-  (corfu-popupinfo-mode t))
+  :hook
+  (elpaca-after-init . global-corfu-mode)
+  (elpaca-after-init . corfu-popupinfo-mode))
 
 ;;; NERD-ICONS-CORFU
 ;; Provides Nerd Icons to be used with CORFU.
@@ -803,20 +816,22 @@
          ("<leader> l f" . eglot-format))
 
   :config
+  (add-to-list 'eglot-server-programs
+             '((typst-ts-mode) . ("tinymist")))
   ;; Custom server bundes can be defined like this
   ;; or prebundeled: https://github.com/joaotavora/rassumfrassum?tab=readme-ov-file#presets
   ;; (add-to-list 'eglot-server-programs
   ;;              `(python-mode
-  ;;                . ,(eglot-alternatives '(("pyright-langserver" "--stdio")
-  ;;                                         "jedi-language-server"
-  ;;                                         "pylsp"))))
-
+  ;;                 . ,(eglot-alternatives '(("pyright-langserver" "--stdio")
+  ;;                                          "jedi-language-server"
+  ;;                                          "pylsp"))))
 
   :init
   ;; Special commands flags passed to language servers
   ;; Better: put in .dir-locals.el per project
-  ;; (setq-default eglot-workspace-configuration (quote
-  ;;                                              (:gopls (:hints (:parameterNames t)))))
+  (setq-default eglot-workspace-configuration
+                '(:tinymist (:formatterMode "typstyle")
+                  :gopls (:hints (:parameterNames t))))
 
   ;; Mute Eglot chatter
   (fset #'jsonrpc--log-event #'ignore))
@@ -1372,7 +1387,8 @@
 ;; Integrates direnv with Emacs, automatically loading project-specific environment variables from `.envrc`.
 ;; Keeps Emacs' environment in sync with the shell and allows approving `.envrc` files from within Emacs.
 (use-package envrc
-  :config (envrc-global-mode))
+  :hook
+  (elpaca-after-init . envrc-global-mode))     ;; Enable envrc mode after initialization.
 
 ;;; ...and MISE, which is like ENVRC but i like it even better
 ;;; Bug [13.02.2026] - does not automatically load environment
@@ -1411,7 +1427,8 @@
         ("i" . vundo--inspect)
         ("D" . vundo--debug)))
 
-(use-package undo-fu)
+(use-package undo-fu
+  :defer t)
 
 (use-package undo-fu-session
   :after undo-fu
